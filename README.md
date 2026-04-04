@@ -7,21 +7,20 @@
 
 **Ultimate MCP server for Telegram Bot API** — 169 methods with full Bot API 9.6 coverage, meta-mode, rate limiting, circuit breaker, Zod validation.
 
-## Why this server?
+## Features
 
-| Feature | telegram-api-mcp | FantomaSkaRus1 | TONresistor | 0xDEADBEEF |
-|---------|:---:|:---:|:---:|:---:|
-| Bot API methods | **169/169** | ~15 | ~20 | ~30 |
-| Bot API version | **9.6** | 7.x | 7.x | 7.x |
-| Tool annotations | **All 169** | None | None | None |
-| Rate limiting | **Global + per-chat** | None | None | None |
-| Circuit breaker | **3-state** | None | None | None |
-| Retry with backoff | **429 + 5xx** | None | None | Basic |
-| Token masking | **Yes** | No | No | No |
-| File upload security | **Path traversal protection** | No | No | No |
-| Meta-mode (2 tools) | **Yes** | No | No | No |
-| Zod validation | **Every param** | None | Partial | None |
-| Response truncation | **100K chars** | None | None | None |
+- **169/169 Bot API methods** — messages, media, polls, chats, forums, stickers, payments, business, stories, gifts, games, inline, managed bots
+- **Bot API 9.6** (April 2026) — managed bots, revoting polls, shuffle options, poll descriptions
+- **Meta-mode** — 2 tools instead of 169, saves ~99% context tokens
+- **Rate limiting** — global (30 req/sec) + per-chat (20 msg/min), token bucket with async mutex
+- **Circuit breaker** — 3-state (closed/open/half-open), auto-recovery
+- **Retry with backoff** — respects Telegram 429 `retry_after`, exponential backoff on 5xx
+- **Zod validation** — every parameter validated before hitting Telegram API
+- **Token masking** — bot token never appears in responses, logs, or error messages
+- **File upload security** — path traversal protection, configurable allowed directories
+- **Tool annotations** — all 169 methods annotated (readOnly, destructive, idempotent, openWorld)
+- **Response truncation** — 100K char limit to prevent context overflow
+- **Zero bloat** — only 2 dependencies: `@modelcontextprotocol/sdk` + `zod`
 
 ## Quick Start
 
