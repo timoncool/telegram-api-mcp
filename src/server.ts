@@ -205,17 +205,20 @@ async function callTelegram(
     const result = await client.call(method.apiMethod, params);
 
     // Auto-log send/forward/copy/post calls
-    if (LOGGED_METHODS.has(method.apiMethod) && result && typeof result === "object") {
-      const r = result as Record<string, unknown>;
+    if (LOGGED_METHODS.has(method.apiMethod) && result != null) {
+      const r = (Array.isArray(result) ? result[0] : result) as Record<string, unknown> | undefined;
+      const preview = truncateForLog(
+        (params.caption as string) ?? (params.text as string) ?? ""
+      );
       logPost({
         timestamp: new Date().toISOString(),
         method: method.apiMethod,
         chat_id: (params.chat_id as string | number) ?? "",
-        message_id: (r.message_id as number) ?? undefined,
-        caption_preview: truncateForLog(
-          (params.caption as string) ?? (params.text as string) ?? ""
-        ),
-      }).catch(() => {}); // fire-and-forget, don't block response
+        message_id: (r?.message_id as number) ?? undefined,
+        caption_preview: preview || undefined,
+      }).catch((err) => {
+        log("warn", `post-log write failed: ${(err as Error).message}`);
+      });
     }
 
     const text = formatResult(method.apiMethod, result);
