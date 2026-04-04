@@ -3,11 +3,13 @@ import {
   MethodDef, ChatId, Text, ParseMode, FileInput,
   MessageEntities, LinkPreviewOptions,
   commonSendParams, commonMediaParams, BooleanFlag, PositiveInt,
+  ANNOTATIONS,
 } from "../method-registry.js";
 
 export const messageMethods: MethodDef[] = [
   {
     apiMethod: "sendMessage",
+    annotations: ANNOTATIONS.send,
     toolName: "send_message",
     description: "Send a text message to a chat. Supports HTML, Markdown, MarkdownV2 formatting.",
     category: "messages",
@@ -26,6 +28,7 @@ export const messageMethods: MethodDef[] = [
   // sendMessageDraft is in other.ts
   {
     apiMethod: "sendPhoto",
+    annotations: ANNOTATIONS.send,
     toolName: "send_photo",
     description: "Send a photo. Pass file_id, HTTP URL, or absolute file path.",
     category: "media",
@@ -43,6 +46,7 @@ export const messageMethods: MethodDef[] = [
   },
   {
     apiMethod: "sendAudio",
+    annotations: ANNOTATIONS.send,
     toolName: "send_audio",
     description: "Send an audio file. Telegram clients display it in the music player.",
     category: "media",
@@ -62,6 +66,7 @@ export const messageMethods: MethodDef[] = [
   },
   {
     apiMethod: "sendDocument",
+    annotations: ANNOTATIONS.send,
     toolName: "send_document",
     description: "Send a general file (document).",
     category: "media",
@@ -79,6 +84,7 @@ export const messageMethods: MethodDef[] = [
   },
   {
     apiMethod: "sendVideo",
+    annotations: ANNOTATIONS.send,
     toolName: "send_video",
     description: "Send a video file. Telegram clients support MPEG4 videos.",
     category: "media",
@@ -101,6 +107,7 @@ export const messageMethods: MethodDef[] = [
   },
   {
     apiMethod: "sendAnimation",
+    annotations: ANNOTATIONS.send,
     toolName: "send_animation",
     description: "Send an animation (GIF or H.264/MPEG-4 AVC video without sound).",
     category: "media",
@@ -121,6 +128,7 @@ export const messageMethods: MethodDef[] = [
   },
   {
     apiMethod: "sendVoice",
+    annotations: ANNOTATIONS.send,
     toolName: "send_voice",
     description: "Send a voice message (.OGG encoded with OPUS).",
     category: "media",
@@ -137,6 +145,7 @@ export const messageMethods: MethodDef[] = [
   },
   {
     apiMethod: "sendVideoNote",
+    annotations: ANNOTATIONS.send,
     toolName: "send_video_note",
     description: "Send a video note (round video message, max 1 minute).",
     category: "media",
@@ -154,6 +163,7 @@ export const messageMethods: MethodDef[] = [
   },
   {
     apiMethod: "sendPaidMedia",
+    annotations: ANNOTATIONS.send,
     toolName: "send_paid_media",
     description: "Send paid media that requires Stars payment to view.",
     category: "media",
@@ -171,6 +181,7 @@ export const messageMethods: MethodDef[] = [
   },
   {
     apiMethod: "sendMediaGroup",
+    annotations: ANNOTATIONS.send,
     toolName: "send_media_group",
     description: "Send a group of photos, videos, documents, or audios as an album (2-10 items).",
     category: "media",
@@ -185,6 +196,7 @@ export const messageMethods: MethodDef[] = [
   },
   {
     apiMethod: "sendLocation",
+    annotations: ANNOTATIONS.send,
     toolName: "send_location",
     description: "Send a point on the map.",
     category: "messages",
@@ -204,6 +216,7 @@ export const messageMethods: MethodDef[] = [
   },
   {
     apiMethod: "sendVenue",
+    annotations: ANNOTATIONS.send,
     toolName: "send_venue",
     description: "Send information about a venue.",
     category: "messages",
@@ -225,6 +238,7 @@ export const messageMethods: MethodDef[] = [
   },
   {
     apiMethod: "sendContact",
+    annotations: ANNOTATIONS.send,
     toolName: "send_contact",
     description: "Send a phone contact.",
     category: "messages",
@@ -242,6 +256,7 @@ export const messageMethods: MethodDef[] = [
   },
   {
     apiMethod: "sendPoll",
+    annotations: ANNOTATIONS.send,
     toolName: "send_poll",
     description: "Send a poll or quiz. Supports v9.6 features: revoting, shuffle, user-added options, descriptions, multiple correct answers.",
     category: "polls",
@@ -273,6 +288,7 @@ export const messageMethods: MethodDef[] = [
   },
   {
     apiMethod: "sendDice",
+    annotations: ANNOTATIONS.send,
     toolName: "send_dice",
     description: "Send an animated emoji that displays a random value.",
     category: "messages",
@@ -287,6 +303,7 @@ export const messageMethods: MethodDef[] = [
   },
   {
     apiMethod: "sendChatAction",
+    annotations: ANNOTATIONS.send,
     toolName: "send_chat_action",
     description: "Tell the user that the bot is performing an action (typing, uploading, etc).",
     category: "messages",
@@ -310,6 +327,7 @@ export const messageMethods: MethodDef[] = [
   },
   {
     apiMethod: "setMessageReaction",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_message_reaction",
     description: "Set a reaction on a message. Use emoji or custom emoji.",
     category: "messages",
@@ -325,6 +343,7 @@ export const messageMethods: MethodDef[] = [
   },
   {
     apiMethod: "sendChecklist",
+    annotations: ANNOTATIONS.send,
     toolName: "send_checklist",
     description: "Send an interactive checklist (v9.1).",
     category: "messages",

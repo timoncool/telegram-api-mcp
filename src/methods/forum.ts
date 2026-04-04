@@ -1,11 +1,12 @@
 import { z } from "zod";
-import { MethodDef, ChatId } from "../method-registry.js";
+import { MethodDef, ChatId ,  ANNOTATIONS } from "../method-registry.js";
 
 const ThreadId = z.number().int().describe("Forum topic thread ID");
 
 export const forumMethods: MethodDef[] = [
   {
     apiMethod: "getForumTopicIconStickers",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_forum_topic_icon_stickers",
     description: "Get custom emoji stickers that can be used as forum topic icons.",
     category: "forum",
@@ -16,6 +17,7 @@ export const forumMethods: MethodDef[] = [
   },
   {
     apiMethod: "createForumTopic",
+    annotations: ANNOTATIONS.send,
     toolName: "create_forum_topic",
     description: "Create a topic in a forum supergroup or private chat (v9.4+).",
     category: "forum",
@@ -31,6 +33,7 @@ export const forumMethods: MethodDef[] = [
   },
   {
     apiMethod: "editForumTopic",
+    annotations: ANNOTATIONS.modify,
     toolName: "edit_forum_topic",
     description: "Edit name and icon of a forum topic.",
     category: "forum",
@@ -46,6 +49,7 @@ export const forumMethods: MethodDef[] = [
   },
   {
     apiMethod: "closeForumTopic",
+    annotations: ANNOTATIONS.modify,
     toolName: "close_forum_topic",
     description: "Close an open topic in a forum supergroup.",
     category: "forum",
@@ -59,6 +63,7 @@ export const forumMethods: MethodDef[] = [
   },
   {
     apiMethod: "reopenForumTopic",
+    annotations: ANNOTATIONS.modify,
     toolName: "reopen_forum_topic",
     description: "Reopen a closed topic.",
     category: "forum",
@@ -72,6 +77,7 @@ export const forumMethods: MethodDef[] = [
   },
   {
     apiMethod: "deleteForumTopic",
+    annotations: ANNOTATIONS.destructive,
     toolName: "delete_forum_topic",
     description: "Delete a forum topic along with all its messages.",
     category: "forum",
@@ -85,6 +91,7 @@ export const forumMethods: MethodDef[] = [
   },
   {
     apiMethod: "unpinAllForumTopicMessages",
+    annotations: ANNOTATIONS.modify,
     toolName: "unpin_all_forum_topic_messages",
     description: "Unpin all messages in a forum topic.",
     category: "forum",
@@ -98,6 +105,7 @@ export const forumMethods: MethodDef[] = [
   },
   {
     apiMethod: "editGeneralForumTopic",
+    annotations: ANNOTATIONS.modify,
     toolName: "edit_general_forum_topic",
     description: "Edit the name of the 'General' forum topic.",
     category: "forum",
@@ -111,6 +119,7 @@ export const forumMethods: MethodDef[] = [
   },
   {
     apiMethod: "closeGeneralForumTopic",
+    annotations: ANNOTATIONS.modify,
     toolName: "close_general_forum_topic",
     description: "Close the 'General' topic.",
     category: "forum",
@@ -123,6 +132,7 @@ export const forumMethods: MethodDef[] = [
   },
   {
     apiMethod: "reopenGeneralForumTopic",
+    annotations: ANNOTATIONS.modify,
     toolName: "reopen_general_forum_topic",
     description: "Reopen the 'General' topic.",
     category: "forum",
@@ -135,6 +145,7 @@ export const forumMethods: MethodDef[] = [
   },
   {
     apiMethod: "hideGeneralForumTopic",
+    annotations: ANNOTATIONS.modify,
     toolName: "hide_general_forum_topic",
     description: "Hide the 'General' topic.",
     category: "forum",
@@ -147,6 +158,7 @@ export const forumMethods: MethodDef[] = [
   },
   {
     apiMethod: "unhideGeneralForumTopic",
+    annotations: ANNOTATIONS.modify,
     toolName: "unhide_general_forum_topic",
     description: "Unhide the 'General' topic.",
     category: "forum",
@@ -159,6 +171,7 @@ export const forumMethods: MethodDef[] = [
   },
   {
     apiMethod: "unpinAllGeneralForumTopicMessages",
+    annotations: ANNOTATIONS.modify,
     toolName: "unpin_all_general_forum_topic_messages",
     description: "Unpin all messages in the 'General' topic.",
     category: "forum",

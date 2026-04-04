@@ -1,9 +1,10 @@
 import { z } from "zod";
-import { MethodDef, ChatId, FileInput, BooleanFlag, commonSendParams } from "../method-registry.js";
+import { MethodDef, ChatId, FileInput, BooleanFlag, commonSendParams ,  ANNOTATIONS } from "../method-registry.js";
 
 export const stickerMethods: MethodDef[] = [
   {
     apiMethod: "sendSticker",
+    annotations: ANNOTATIONS.send,
     toolName: "send_sticker",
     description: "Send a sticker.",
     category: "stickers",
@@ -19,6 +20,7 @@ export const stickerMethods: MethodDef[] = [
   },
   {
     apiMethod: "getStickerSet",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_sticker_set",
     description: "Get a sticker set by name.",
     category: "stickers",
@@ -31,6 +33,7 @@ export const stickerMethods: MethodDef[] = [
   },
   {
     apiMethod: "getCustomEmojiStickers",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_custom_emoji_stickers",
     description: "Get information about custom emoji stickers by their identifiers.",
     category: "stickers",
@@ -42,6 +45,7 @@ export const stickerMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "uploadStickerFile",
     toolName: "upload_sticker_file",
     description: "Upload a sticker file to Telegram for later use in createNewStickerSet.",
@@ -57,6 +61,7 @@ export const stickerMethods: MethodDef[] = [
   },
   {
     apiMethod: "createNewStickerSet",
+    annotations: ANNOTATIONS.send,
     toolName: "create_new_sticker_set",
     description: "Create a new sticker set owned by a user.",
     category: "stickers",
@@ -73,6 +78,7 @@ export const stickerMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "addStickerToSet",
     toolName: "add_sticker_to_set",
     description: "Add a sticker to an existing set.",
@@ -88,6 +94,7 @@ export const stickerMethods: MethodDef[] = [
   },
   {
     apiMethod: "setStickerPositionInSet",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_sticker_position_in_set",
     description: "Move a sticker to a specific position in the set.",
     category: "stickers",
@@ -101,6 +108,7 @@ export const stickerMethods: MethodDef[] = [
   },
   {
     apiMethod: "deleteStickerFromSet",
+    annotations: ANNOTATIONS.destructive,
     toolName: "delete_sticker_from_set",
     description: "Delete a sticker from a set.",
     category: "stickers",
@@ -112,6 +120,7 @@ export const stickerMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "replaceStickerInSet",
     toolName: "replace_sticker_in_set",
     description: "Replace an existing sticker in a set with a new one.",
@@ -128,6 +137,7 @@ export const stickerMethods: MethodDef[] = [
   },
   {
     apiMethod: "setStickerSetTitle",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_sticker_set_title",
     description: "Set the title of a sticker set.",
     category: "stickers",
@@ -141,6 +151,7 @@ export const stickerMethods: MethodDef[] = [
   },
   {
     apiMethod: "setStickerSetThumbnail",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_sticker_set_thumbnail",
     description: "Set the thumbnail of a sticker set.",
     category: "stickers",
@@ -155,6 +166,7 @@ export const stickerMethods: MethodDef[] = [
   },
   {
     apiMethod: "setCustomEmojiStickerSetThumbnail",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_custom_emoji_sticker_set_thumbnail",
     description: "Set the thumbnail of a custom emoji sticker set.",
     category: "stickers",
@@ -168,6 +180,7 @@ export const stickerMethods: MethodDef[] = [
   },
   {
     apiMethod: "setStickerEmojiList",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_sticker_emoji_list",
     description: "Change the list of emoji associated with a sticker.",
     category: "stickers",
@@ -181,6 +194,7 @@ export const stickerMethods: MethodDef[] = [
   },
   {
     apiMethod: "deleteStickerSet",
+    annotations: ANNOTATIONS.destructive,
     toolName: "delete_sticker_set",
     description: "Delete a sticker set created by the bot.",
     category: "stickers",

@@ -1,8 +1,9 @@
 import { z } from "zod";
-import { MethodDef, BooleanFlag, commonSendParams } from "../method-registry.js";
+import { MethodDef, BooleanFlag, commonSendParams ,  ANNOTATIONS } from "../method-registry.js";
 
 export const gameMethods: MethodDef[] = [
   {
+    annotations: ANNOTATIONS.send,
     apiMethod: "sendGame", toolName: "send_game",
     description: "Send a game.", category: "games",
     needsChatId: true, canUploadFiles: false, returns: "Message",
@@ -13,6 +14,7 @@ export const gameMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "setGameScore", toolName: "set_game_score",
     description: "Set the score of a user in a game.", category: "games",
     needsChatId: false, canUploadFiles: false, returns: "Message or true",
@@ -27,6 +29,7 @@ export const gameMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.readOnly,
     apiMethod: "getGameHighScores", toolName: "get_game_high_scores",
     description: "Get high scores for a game.", category: "games",
     needsChatId: false, canUploadFiles: false, returns: "Array of GameHighScore",

@@ -1,0 +1,18 @@
+{
+  "$schema": "https://registry.modelcontextprotocol.io/schema/server.json",
+  "name": "io.github.timoncool/telegram-api-mcp",
+  "description": "Ultimate Telegram Bot API v9.6 MCP server — 175 methods, meta-mode, rate limiting, circuit breaker, Zod validation",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/timoncool/telegram-api-mcp.git"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "name": "telegram-api-mcp",
+      "type": "npm",
+      "version": "0.1.0",
+      "transport": "stdio"
+    }
+  ]
+}

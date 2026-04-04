@@ -1,9 +1,10 @@
 import { z } from "zod";
-import { MethodDef, FileInput, BooleanFlag } from "../method-registry.js";
+import { MethodDef, FileInput, BooleanFlag ,  ANNOTATIONS } from "../method-registry.js";
 
 export const botMethods: MethodDef[] = [
   {
     apiMethod: "getMe",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_me",
     description: "Get basic information about the bot (id, name, username, etc).",
     category: "bot",
@@ -13,6 +14,7 @@ export const botMethods: MethodDef[] = [
     params: [],
   },
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "logOut",
     toolName: "log_out",
     description: "Log out from the cloud Bot API server. Use before moving to a local server.",
@@ -23,6 +25,7 @@ export const botMethods: MethodDef[] = [
     params: [],
   },
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "close",
     toolName: "close",
     description: "Close the bot instance. Use before moving between local servers.",
@@ -34,6 +37,7 @@ export const botMethods: MethodDef[] = [
   },
   {
     apiMethod: "setMyCommands",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_my_commands",
     description: "Set the bot's command list shown in the menu.",
     category: "bot",
@@ -48,6 +52,7 @@ export const botMethods: MethodDef[] = [
   },
   {
     apiMethod: "deleteMyCommands",
+    annotations: ANNOTATIONS.destructive,
     toolName: "delete_my_commands",
     description: "Delete the bot's command list for a given scope and language.",
     category: "bot",
@@ -61,6 +66,7 @@ export const botMethods: MethodDef[] = [
   },
   {
     apiMethod: "getMyCommands",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_my_commands",
     description: "Get the bot's current command list.",
     category: "bot",
@@ -74,6 +80,7 @@ export const botMethods: MethodDef[] = [
   },
   {
     apiMethod: "setMyName",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_my_name",
     description: "Set the bot's name.",
     category: "bot",
@@ -87,6 +94,7 @@ export const botMethods: MethodDef[] = [
   },
   {
     apiMethod: "getMyName",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_my_name",
     description: "Get the bot's name for a given language.",
     category: "bot",
@@ -99,6 +107,7 @@ export const botMethods: MethodDef[] = [
   },
   {
     apiMethod: "setMyDescription",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_my_description",
     description: "Set the bot's description (shown in empty chat).",
     category: "bot",
@@ -112,6 +121,7 @@ export const botMethods: MethodDef[] = [
   },
   {
     apiMethod: "getMyDescription",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_my_description",
     description: "Get the bot's description.",
     category: "bot",
@@ -124,6 +134,7 @@ export const botMethods: MethodDef[] = [
   },
   {
     apiMethod: "setMyShortDescription",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_my_short_description",
     description: "Set the bot's short description (shown on profile page).",
     category: "bot",
@@ -137,6 +148,7 @@ export const botMethods: MethodDef[] = [
   },
   {
     apiMethod: "getMyShortDescription",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_my_short_description",
     description: "Get the bot's short description.",
     category: "bot",
@@ -149,6 +161,7 @@ export const botMethods: MethodDef[] = [
   },
   {
     apiMethod: "setMyDefaultAdministratorRights",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_my_default_administrator_rights",
     description: "Set default admin rights requested when adding bot to groups/channels.",
     category: "bot",
@@ -162,6 +175,7 @@ export const botMethods: MethodDef[] = [
   },
   {
     apiMethod: "getMyDefaultAdministratorRights",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_my_default_administrator_rights",
     description: "Get default admin rights.",
     category: "bot",
@@ -174,6 +188,7 @@ export const botMethods: MethodDef[] = [
   },
   {
     apiMethod: "setMyDefaultParseMode",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_my_default_parse_mode",
     description: "Set default parse mode for bot messages.",
     category: "bot",
@@ -186,6 +201,7 @@ export const botMethods: MethodDef[] = [
   },
   {
     apiMethod: "getMyDefaultParseMode",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_my_default_parse_mode",
     description: "Get default parse mode.",
     category: "bot",
@@ -196,6 +212,7 @@ export const botMethods: MethodDef[] = [
   },
   {
     apiMethod: "setMyDefaultChatPermissions",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_my_default_chat_permissions",
     description: "Set default chat permissions for the bot.",
     category: "bot",
@@ -209,6 +226,7 @@ export const botMethods: MethodDef[] = [
   },
   {
     apiMethod: "getMyDefaultChatPermissions",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_my_default_chat_permissions",
     description: "Get default chat permissions.",
     category: "bot",
@@ -219,6 +237,7 @@ export const botMethods: MethodDef[] = [
   },
   {
     apiMethod: "setMyProfilePhoto",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_my_profile_photo",
     description: "Set the bot's profile photo (v9.4).",
     category: "bot",
@@ -231,6 +250,7 @@ export const botMethods: MethodDef[] = [
   },
   {
     apiMethod: "removeMyProfilePhoto",
+    annotations: ANNOTATIONS.modify,
     toolName: "remove_my_profile_photo",
     description: "Remove the bot's profile photo (v9.4).",
     category: "bot",
@@ -243,6 +263,7 @@ export const botMethods: MethodDef[] = [
   },
   {
     apiMethod: "getMyTopics",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_my_topics",
     description: "Get forum topics created by the bot.",
     category: "bot",
@@ -253,6 +274,7 @@ export const botMethods: MethodDef[] = [
   },
   {
     apiMethod: "getUserProfilePhotos",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_user_profile_photos",
     description: "Get a user's profile photos.",
     category: "bot",
@@ -267,6 +289,7 @@ export const botMethods: MethodDef[] = [
   },
   {
     apiMethod: "getUserProfileAudios",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_user_profile_audios",
     description: "Get a user's profile audio tracks (v9.4).",
     category: "bot",
@@ -281,6 +304,7 @@ export const botMethods: MethodDef[] = [
   },
   {
     apiMethod: "getFile",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_file",
     description: "Get file info for downloading. Returns file_path — use https://api.telegram.org/file/bot<token>/<file_path> to download.",
     category: "bot",

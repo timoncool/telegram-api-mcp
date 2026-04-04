@@ -1,8 +1,9 @@
 import { z } from "zod";
-import { MethodDef, BooleanFlag } from "../method-registry.js";
+import { MethodDef, BooleanFlag ,  ANNOTATIONS } from "../method-registry.js";
 
 export const updateMethods: MethodDef[] = [
   {
+    annotations: ANNOTATIONS.readOnly,
     apiMethod: "getUpdates", toolName: "get_updates",
     description: "Receive incoming updates via long polling.", category: "updates",
     needsChatId: false, canUploadFiles: false, returns: "Array of Update",
@@ -14,6 +15,7 @@ export const updateMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "setWebhook", toolName: "set_webhook",
     description: "Set a webhook URL for receiving updates.", category: "updates",
     needsChatId: false, canUploadFiles: true, returns: "true",
@@ -28,6 +30,7 @@ export const updateMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.destructive,
     apiMethod: "deleteWebhook", toolName: "delete_webhook",
     description: "Remove webhook integration and switch back to getUpdates.", category: "updates",
     needsChatId: false, canUploadFiles: false, returns: "true",
@@ -36,6 +39,7 @@ export const updateMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.readOnly,
     apiMethod: "getWebhookInfo", toolName: "get_webhook_info",
     description: "Get current webhook status.", category: "updates",
     needsChatId: false, canUploadFiles: false, returns: "WebhookInfo",

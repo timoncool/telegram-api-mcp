@@ -2,12 +2,14 @@ import { z } from "zod";
 import {
   MethodDef, ChatId, UserId, Text, ParseMode, MessageEntities, BooleanFlag,
   commonSendParams,
+  ANNOTATIONS,
 } from "../method-registry.js";
 
 export const otherMethods: MethodDef[] = [
   // ─── sendMessageDraft (v9.3, expanded to all bots in v9.5) ────────────
   {
     apiMethod: "sendMessageDraft",
+    annotations: ANNOTATIONS.send,
     toolName: "send_message_draft",
     description: "Send a streaming draft message. Content appears progressively as it's being generated.",
     category: "messages",
@@ -26,6 +28,7 @@ export const otherMethods: MethodDef[] = [
   // ─── WebApp ───────────────────────────────────────────────────────────
   {
     apiMethod: "answerWebAppQuery",
+    annotations: ANNOTATIONS.send,
     toolName: "answer_web_app_query",
     description: "Set the result of an interaction with a Web App and send a message on behalf of the user.",
     category: "inline",
@@ -41,6 +44,7 @@ export const otherMethods: MethodDef[] = [
   // ─── Chat Menu Button ─────────────────────────────────────────────────
   {
     apiMethod: "setChatMenuButton",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_chat_menu_button",
     description: "Set the bot's menu button in a private chat or default menu button.",
     category: "bot",
@@ -54,6 +58,7 @@ export const otherMethods: MethodDef[] = [
   },
   {
     apiMethod: "getChatMenuButton",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_chat_menu_button",
     description: "Get the current menu button for a chat or default.",
     category: "bot",
@@ -68,6 +73,7 @@ export const otherMethods: MethodDef[] = [
   // ─── Subscription Invite Links ────────────────────────────────────────
   {
     apiMethod: "createChatSubscriptionInviteLink",
+    annotations: ANNOTATIONS.send,
     toolName: "create_chat_subscription_invite_link",
     description: "Create a subscription invite link for a channel chat.",
     category: "invite",
@@ -83,6 +89,7 @@ export const otherMethods: MethodDef[] = [
   },
   {
     apiMethod: "editChatSubscriptionInviteLink",
+    annotations: ANNOTATIONS.modify,
     toolName: "edit_chat_subscription_invite_link",
     description: "Edit a subscription invite link.",
     category: "invite",
@@ -99,6 +106,7 @@ export const otherMethods: MethodDef[] = [
   // ─── Star Subscriptions ───────────────────────────────────────────────
   {
     apiMethod: "editUserStarSubscription",
+    annotations: ANNOTATIONS.modify,
     toolName: "edit_user_star_subscription",
     description: "Edit a user's Star subscription (cancel or extend).",
     category: "payments",
@@ -115,6 +123,7 @@ export const otherMethods: MethodDef[] = [
   // ─── Business Connection ──────────────────────────────────────────────
   {
     apiMethod: "getBusinessConnection",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_business_connection",
     description: "Get information about a business connection.",
     category: "business",
@@ -129,6 +138,7 @@ export const otherMethods: MethodDef[] = [
   // ─── Verification ─────────────────────────────────────────────────────
   {
     apiMethod: "verifyUser",
+    annotations: ANNOTATIONS.modify,
     toolName: "verify_user",
     description: "Verify a user on behalf of the bot's organization.",
     category: "other",
@@ -142,6 +152,7 @@ export const otherMethods: MethodDef[] = [
   },
   {
     apiMethod: "removeUserVerification",
+    annotations: ANNOTATIONS.modify,
     toolName: "remove_user_verification",
     description: "Remove user verification.",
     category: "other",
@@ -154,6 +165,7 @@ export const otherMethods: MethodDef[] = [
   },
   {
     apiMethod: "verifyChat",
+    annotations: ANNOTATIONS.modify,
     toolName: "verify_chat",
     description: "Verify a chat on behalf of the bot's organization.",
     category: "other",
@@ -167,6 +179,7 @@ export const otherMethods: MethodDef[] = [
   },
   {
     apiMethod: "removeChatVerification",
+    annotations: ANNOTATIONS.modify,
     toolName: "remove_chat_verification",
     description: "Remove chat verification.",
     category: "other",
@@ -181,6 +194,7 @@ export const otherMethods: MethodDef[] = [
   // ─── Sticker extras ───────────────────────────────────────────────────
   {
     apiMethod: "setStickerKeywords",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_sticker_keywords",
     description: "Change search keywords for a sticker.",
     category: "stickers",
@@ -194,6 +208,7 @@ export const otherMethods: MethodDef[] = [
   },
   {
     apiMethod: "setStickerMaskPosition",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_sticker_mask_position",
     description: "Change the mask position of a mask sticker.",
     category: "stickers",
@@ -209,6 +224,7 @@ export const otherMethods: MethodDef[] = [
   // ─── User Emoji Status ────────────────────────────────────────────────
   {
     apiMethod: "setUserEmojiStatus",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_user_emoji_status",
     description: "Set a custom emoji status for a user (requires bot to have appropriate rights).",
     category: "other",
@@ -225,6 +241,7 @@ export const otherMethods: MethodDef[] = [
   // ─── Prepared Inline Message ──────────────────────────────────────────
   {
     apiMethod: "savePreparedInlineMessage",
+    annotations: ANNOTATIONS.modify,
     toolName: "save_prepared_inline_message",
     description: "Save a prepared inline message result for a user to send via inline button.",
     category: "inline",

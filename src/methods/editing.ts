@@ -1,9 +1,10 @@
 import { z } from "zod";
-import { MethodDef, ChatId, Text, ParseMode, MessageEntities, LinkPreviewOptions, commonEditParams, BooleanFlag } from "../method-registry.js";
+import { MethodDef, ChatId, Text, ParseMode, MessageEntities, LinkPreviewOptions, commonEditParams, BooleanFlag ,  ANNOTATIONS } from "../method-registry.js";
 
 export const editingMethods: MethodDef[] = [
   {
     apiMethod: "editMessageText",
+    annotations: ANNOTATIONS.modify,
     toolName: "edit_message_text",
     description: "Edit the text of a message sent by the bot or via inline mode.",
     category: "editing",
@@ -20,6 +21,7 @@ export const editingMethods: MethodDef[] = [
   },
   {
     apiMethod: "editMessageCaption",
+    annotations: ANNOTATIONS.modify,
     toolName: "edit_message_caption",
     description: "Edit the caption of a media message.",
     category: "editing",
@@ -36,6 +38,7 @@ export const editingMethods: MethodDef[] = [
   },
   {
     apiMethod: "editMessageMedia",
+    annotations: ANNOTATIONS.modify,
     toolName: "edit_message_media",
     description: "Edit the media content of a message (photo, video, animation, document, audio).",
     category: "editing",
@@ -49,6 +52,7 @@ export const editingMethods: MethodDef[] = [
   },
   {
     apiMethod: "editMessageReplyMarkup",
+    annotations: ANNOTATIONS.modify,
     toolName: "edit_message_reply_markup",
     description: "Edit the inline keyboard of a message.",
     category: "editing",
@@ -59,6 +63,7 @@ export const editingMethods: MethodDef[] = [
   },
   {
     apiMethod: "editMessageLiveLocation",
+    annotations: ANNOTATIONS.modify,
     toolName: "edit_message_live_location",
     description: "Edit a live location message.",
     category: "editing",
@@ -76,6 +81,7 @@ export const editingMethods: MethodDef[] = [
   },
   {
     apiMethod: "stopMessageLiveLocation",
+    annotations: ANNOTATIONS.modify,
     toolName: "stop_message_live_location",
     description: "Stop updating a live location message.",
     category: "editing",
@@ -86,6 +92,7 @@ export const editingMethods: MethodDef[] = [
   },
   {
     apiMethod: "editMessageChecklist",
+    annotations: ANNOTATIONS.modify,
     toolName: "edit_message_checklist",
     description: "Edit a checklist message (v9.1).",
     category: "editing",
@@ -101,6 +108,7 @@ export const editingMethods: MethodDef[] = [
   },
   {
     apiMethod: "deleteMessage",
+    annotations: ANNOTATIONS.destructive,
     toolName: "delete_message",
     description: "Delete a message. Bot must have delete rights in the chat.",
     category: "editing",
@@ -114,6 +122,7 @@ export const editingMethods: MethodDef[] = [
   },
   {
     apiMethod: "deleteMessages",
+    annotations: ANNOTATIONS.destructive,
     toolName: "delete_messages",
     description: "Delete multiple messages at once. Max 100 messages.",
     category: "editing",
@@ -127,6 +136,7 @@ export const editingMethods: MethodDef[] = [
   },
   {
     apiMethod: "stopPoll",
+    annotations: ANNOTATIONS.modify,
     toolName: "stop_poll",
     description: "Stop a poll in a chat.",
     category: "editing",

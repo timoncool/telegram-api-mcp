@@ -1,10 +1,11 @@
 import { z } from "zod";
-import { MethodDef, ChatId, UserId, BooleanFlag, FileInput } from "../method-registry.js";
+import { MethodDef, ChatId, UserId, BooleanFlag, FileInput ,  ANNOTATIONS } from "../method-registry.js";
 
 export const chatMethods: MethodDef[] = [
   // ─── Chat Info ────────────────────────────────────────────────
   {
     apiMethod: "getChat",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_chat",
     description: "Get full information about a chat (title, description, photo, member count, permissions, etc).",
     category: "chat",
@@ -17,6 +18,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "getChatAdministrators",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_chat_administrators",
     description: "Get a list of administrators in a chat.",
     category: "chat",
@@ -29,6 +31,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "getChatMemberCount",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_chat_member_count",
     description: "Get the number of members in a chat.",
     category: "chat",
@@ -41,6 +44,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "getChatMember",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_chat_member",
     description: "Get information about a member in a chat.",
     category: "members",
@@ -56,6 +60,7 @@ export const chatMethods: MethodDef[] = [
   // ─── Member Management ────────────────────────────────────────
   {
     apiMethod: "banChatMember",
+    annotations: ANNOTATIONS.destructive,
     toolName: "ban_chat_member",
     description: "Ban a user from a chat. In supergroups/channels, the user cannot return without being unbanned.",
     category: "members",
@@ -71,6 +76,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "unbanChatMember",
+    annotations: ANNOTATIONS.modify,
     toolName: "unban_chat_member",
     description: "Unban a previously banned user.",
     category: "members",
@@ -85,6 +91,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "restrictChatMember",
+    annotations: ANNOTATIONS.modify,
     toolName: "restrict_chat_member",
     description: "Restrict a user's permissions in a supergroup.",
     category: "members",
@@ -101,6 +108,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "promoteChatMember",
+    annotations: ANNOTATIONS.modify,
     toolName: "promote_chat_member",
     description: "Promote or demote a user in a supergroup or channel.",
     category: "members",
@@ -127,6 +135,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "setChatAdministratorCustomTitle",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_chat_administrator_custom_title",
     description: "Set a custom title for an administrator.",
     category: "members",
@@ -141,6 +150,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "setChatMemberTag",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_chat_member_tag",
     description: "Set or remove a tag for a chat member (v9.5).",
     category: "members",
@@ -155,6 +165,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "banChatSenderChat",
+    annotations: ANNOTATIONS.destructive,
     toolName: "ban_chat_sender_chat",
     description: "Ban a channel chat from sending messages in a supergroup.",
     category: "members",
@@ -168,6 +179,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "unbanChatSenderChat",
+    annotations: ANNOTATIONS.modify,
     toolName: "unban_chat_sender_chat",
     description: "Unban a previously banned channel chat.",
     category: "members",
@@ -183,6 +195,7 @@ export const chatMethods: MethodDef[] = [
   // ─── Chat Settings ────────────────────────────────────────────
   {
     apiMethod: "setChatPermissions",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_chat_permissions",
     description: "Set default permissions for all members in a group/supergroup.",
     category: "chat",
@@ -197,6 +210,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "setChatPhoto",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_chat_photo",
     description: "Set a new chat photo.",
     category: "chat",
@@ -210,6 +224,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "deleteChatPhoto",
+    annotations: ANNOTATIONS.destructive,
     toolName: "delete_chat_photo",
     description: "Delete a chat photo.",
     category: "chat",
@@ -222,6 +237,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "setChatTitle",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_chat_title",
     description: "Change the title of a chat.",
     category: "chat",
@@ -235,6 +251,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "setChatDescription",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_chat_description",
     description: "Change the description of a chat.",
     category: "chat",
@@ -248,6 +265,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "setChatStickerSet",
+    annotations: ANNOTATIONS.modify,
     toolName: "set_chat_sticker_set",
     description: "Set the sticker set for a supergroup.",
     category: "chat",
@@ -261,6 +279,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "deleteChatStickerSet",
+    annotations: ANNOTATIONS.destructive,
     toolName: "delete_chat_sticker_set",
     description: "Delete the sticker set from a supergroup.",
     category: "chat",
@@ -273,6 +292,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "leaveChat",
+    annotations: ANNOTATIONS.destructive,
     toolName: "leave_chat",
     description: "Bot leaves a group, supergroup, or channel.",
     category: "chat",
@@ -287,6 +307,7 @@ export const chatMethods: MethodDef[] = [
   // ─── Pinning ──────────────────────────────────────────────────
   {
     apiMethod: "pinChatMessage",
+    annotations: ANNOTATIONS.modify,
     toolName: "pin_chat_message",
     description: "Pin a message in a chat.",
     category: "chat",
@@ -302,6 +323,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "unpinChatMessage",
+    annotations: ANNOTATIONS.modify,
     toolName: "unpin_chat_message",
     description: "Unpin a message in a chat.",
     category: "chat",
@@ -315,6 +337,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "unpinAllChatMessages",
+    annotations: ANNOTATIONS.modify,
     toolName: "unpin_all_chat_messages",
     description: "Unpin all messages in a chat.",
     category: "chat",
@@ -329,6 +352,7 @@ export const chatMethods: MethodDef[] = [
   // ─── Invite Links ─────────────────────────────────────────────
   {
     apiMethod: "exportChatInviteLink",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "export_chat_invite_link",
     description: "Generate a new primary invite link (revokes previous one).",
     category: "invite",
@@ -341,6 +365,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "createChatInviteLink",
+    annotations: ANNOTATIONS.send,
     toolName: "create_chat_invite_link",
     description: "Create an additional invite link.",
     category: "invite",
@@ -357,6 +382,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "editChatInviteLink",
+    annotations: ANNOTATIONS.modify,
     toolName: "edit_chat_invite_link",
     description: "Edit a non-primary invite link.",
     category: "invite",
@@ -373,6 +399,7 @@ export const chatMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.destructive,
     apiMethod: "revokeChatInviteLink",
     toolName: "revoke_chat_invite_link",
     description: "Revoke an invite link.",
@@ -387,6 +414,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "approveChatJoinRequest",
+    annotations: ANNOTATIONS.modify,
     toolName: "approve_chat_join_request",
     description: "Approve a chat join request.",
     category: "invite",
@@ -400,6 +428,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "declineChatJoinRequest",
+    annotations: ANNOTATIONS.modify,
     toolName: "decline_chat_join_request",
     description: "Decline a chat join request.",
     category: "invite",
@@ -415,6 +444,7 @@ export const chatMethods: MethodDef[] = [
   // ─── Boosts ───────────────────────────────────────────────────
   {
     apiMethod: "getUserChatBoosts",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_user_chat_boosts",
     description: "Get a user's boosts in a chat.",
     category: "chat",
@@ -428,6 +458,7 @@ export const chatMethods: MethodDef[] = [
   },
   {
     apiMethod: "getChatBoosts",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_chat_boosts",
     description: "Get all boosts in a chat.",
     category: "chat",

@@ -22,7 +22,33 @@ export interface MethodDef {
   canUploadFiles: boolean;
   /** Return type description */
   returns: string;
+  /** MCP tool annotations — hints for clients about tool behavior */
+  annotations?: ToolAnnotations;
 }
+
+/** MCP Tool Annotations per spec 2025-06-18 */
+export interface ToolAnnotations {
+  /** Tool only reads data, doesn't modify anything */
+  readOnlyHint?: boolean;
+  /** Tool may perform destructive/irreversible actions (default: true!) */
+  destructiveHint?: boolean;
+  /** Calling with same args gives same result */
+  idempotentHint?: boolean;
+  /** Tool interacts with external entities */
+  openWorldHint?: boolean;
+}
+
+/** Common annotation presets for DRY */
+export const ANNOTATIONS = {
+  /** GET methods — read only, no side effects */
+  readOnly: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true } as ToolAnnotations,
+  /** SEND methods — create content, not destructive */
+  send: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true } as ToolAnnotations,
+  /** SET/EDIT methods — modify existing, idempotent */
+  modify: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true } as ToolAnnotations,
+  /** DELETE/BAN methods — destructive, irreversible */
+  destructive: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true } as ToolAnnotations,
+} as const;
 
 export type MethodCategory =
   | "updates"

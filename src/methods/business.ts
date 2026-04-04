@@ -1,8 +1,9 @@
 import { z } from "zod";
-import { MethodDef, ChatId, BooleanFlag } from "../method-registry.js";
+import { MethodDef, ChatId, BooleanFlag ,  ANNOTATIONS } from "../method-registry.js";
 
 export const businessMethods: MethodDef[] = [
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "readBusinessMessage", toolName: "read_business_message",
     description: "Mark a business message as read.", category: "business",
     needsChatId: true, canUploadFiles: false, returns: "true",
@@ -13,6 +14,7 @@ export const businessMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.destructive,
     apiMethod: "deleteBusinessMessages", toolName: "delete_business_messages",
     description: "Delete business messages.", category: "business",
     needsChatId: false, canUploadFiles: false, returns: "true",
@@ -22,6 +24,7 @@ export const businessMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "setBusinessAccountName", toolName: "set_business_account_name",
     description: "Set the name of a connected business account.", category: "business",
     needsChatId: false, canUploadFiles: false, returns: "true",
@@ -32,6 +35,7 @@ export const businessMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "setBusinessAccountUsername", toolName: "set_business_account_username",
     description: "Set the username of a business account.", category: "business",
     needsChatId: false, canUploadFiles: false, returns: "true",
@@ -41,6 +45,7 @@ export const businessMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "setBusinessAccountBio", toolName: "set_business_account_bio",
     description: "Set the bio of a business account.", category: "business",
     needsChatId: false, canUploadFiles: false, returns: "true",
@@ -50,6 +55,7 @@ export const businessMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "setBusinessAccountProfilePhoto", toolName: "set_business_account_profile_photo",
     description: "Set the profile photo of a business account.", category: "business",
     needsChatId: false, canUploadFiles: true, returns: "true",
@@ -59,6 +65,7 @@ export const businessMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "removeBusinessAccountProfilePhoto", toolName: "remove_business_account_profile_photo",
     description: "Remove a business account profile photo.", category: "business",
     needsChatId: false, canUploadFiles: false, returns: "true",
@@ -68,6 +75,7 @@ export const businessMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "setBusinessAccountGiftSettings", toolName: "set_business_account_gift_settings",
     description: "Configure gift settings for a business account.", category: "business",
     needsChatId: false, canUploadFiles: false, returns: "true",
@@ -78,6 +86,7 @@ export const businessMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.readOnly,
     apiMethod: "getBusinessAccountGifts", toolName: "get_business_account_gifts",
     description: "Get gifts received by a business account.", category: "business",
     needsChatId: false, canUploadFiles: false, returns: "BusinessAccountGifts",
@@ -87,6 +96,7 @@ export const businessMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.readOnly,
     apiMethod: "getBusinessAccountStarBalance", toolName: "get_business_account_star_balance",
     description: "Get the Telegram Stars balance of a business account.", category: "business",
     needsChatId: false, canUploadFiles: false, returns: "StarAmount",
@@ -95,6 +105,7 @@ export const businessMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "transferBusinessAccountStars", toolName: "transfer_business_account_stars",
     description: "Transfer Telegram Stars from a business account to the bot.", category: "business",
     needsChatId: false, canUploadFiles: false, returns: "true",
@@ -104,6 +115,7 @@ export const businessMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "approveSuggestedPost", toolName: "approve_suggested_post",
     description: "Approve a suggested post for a channel (v9.2).", category: "business",
     needsChatId: false, canUploadFiles: false, returns: "true",
@@ -113,6 +125,7 @@ export const businessMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "declineSuggestedPost", toolName: "decline_suggested_post",
     description: "Decline a suggested post for a channel (v9.2).", category: "business",
     needsChatId: false, canUploadFiles: false, returns: "true",

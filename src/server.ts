@@ -53,12 +53,14 @@ function registerAllTools(server: McpServer, client: TelegramClient): void {
   for (const method of allMethods) {
     const zodSchema = getSchema(method);
 
+    const annotations = method.annotations || { destructiveHint: false };
+
     server.tool(
       method.toolName,
       method.description,
       zodSchema.shape,
+      annotations,
       async (params) => {
-        // SDK already validated with zodSchema.shape — pass directly to API
         return callTelegram(client, method, params as Record<string, unknown>);
       }
     );
@@ -179,12 +181,24 @@ async function callTelegram(
   }
 }
 
+const MAX_RESPONSE_LENGTH = 100_000;
+
 function formatResult(method: string, result: unknown): string {
   if (result === true) return `${method}: Success`;
+
+  let text: string;
   if (typeof result === "object" && result !== null) {
-    return JSON.stringify(result, null, 2);
+    text = JSON.stringify(result, null, 2);
+  } else {
+    text = String(result);
   }
-  return String(result);
+
+  // Truncate to prevent filling context window
+  if (text.length > MAX_RESPONSE_LENGTH) {
+    text = text.slice(0, MAX_RESPONSE_LENGTH) + `\n\n... [truncated, ${text.length} chars total]`;
+  }
+
+  return text;
 }
 
 function log(level: "info" | "warn" | "error", msg: string): void {

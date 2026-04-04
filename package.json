@@ -15,7 +15,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "telegram",
@@ -28,6 +29,11 @@
   ],
   "author": "timoncool",
   "license": "MIT",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/timoncool/telegram-api-mcp.git"

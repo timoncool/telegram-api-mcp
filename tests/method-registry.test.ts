@@ -100,6 +100,39 @@ describe("Method Registry", () => {
     expect(results.length).toBeGreaterThanOrEqual(12);
   });
 
+  it("all methods have annotations", () => {
+    for (const m of allMethods) {
+      expect(m.annotations, `Missing annotations for ${m.toolName}`).toBeDefined();
+      expect(typeof m.annotations!.readOnlyHint).toBe("boolean");
+      expect(typeof m.annotations!.destructiveHint).toBe("boolean");
+    }
+  });
+
+  it("read-only methods are marked correctly", () => {
+    const readOnlyMethods = ["getMe", "getChat", "getFile", "getMyCommands", "getWebhookInfo"];
+    for (const name of readOnlyMethods) {
+      const m = findMethodByApiName(name)!;
+      expect(m.annotations?.readOnlyHint, `${name} should be readOnly`).toBe(true);
+      expect(m.annotations?.destructiveHint, `${name} should not be destructive`).toBe(false);
+    }
+  });
+
+  it("destructive methods are marked correctly", () => {
+    const destructiveMethods = ["deleteMessage", "banChatMember", "deleteStickerSet", "leaveChat"];
+    for (const name of destructiveMethods) {
+      const m = findMethodByApiName(name)!;
+      expect(m.annotations?.destructiveHint, `${name} should be destructive`).toBe(true);
+    }
+  });
+
+  it("send methods are not destructive", () => {
+    const sendMethods = ["sendMessage", "sendPhoto", "sendPoll", "forwardMessage"];
+    for (const name of sendMethods) {
+      const m = findMethodByApiName(name)!;
+      expect(m.annotations?.destructiveHint, `${name} should not be destructive`).toBe(false);
+    }
+  });
+
   it("covers all major Bot API 9.6 methods", () => {
     const criticalMethods = [
       "sendMessage", "sendPhoto", "sendVideo", "sendPoll", "sendMediaGroup",

@@ -1,9 +1,10 @@
 import { z } from "zod";
-import { MethodDef, ChatId, BooleanFlag, commonSendParams } from "../method-registry.js";
+import { MethodDef, ChatId, BooleanFlag, commonSendParams ,  ANNOTATIONS } from "../method-registry.js";
 
 export const paymentMethods: MethodDef[] = [
   {
     apiMethod: "sendInvoice",
+    annotations: ANNOTATIONS.send,
     toolName: "send_invoice",
     description: "Send an invoice for payment.",
     category: "payments",
@@ -37,6 +38,7 @@ export const paymentMethods: MethodDef[] = [
   },
   {
     apiMethod: "createInvoiceLink",
+    annotations: ANNOTATIONS.send,
     toolName: "create_invoice_link",
     description: "Create a link for an invoice.",
     category: "payments",
@@ -54,6 +56,7 @@ export const paymentMethods: MethodDef[] = [
   },
   {
     apiMethod: "answerShippingQuery",
+    annotations: ANNOTATIONS.send,
     toolName: "answer_shipping_query",
     description: "Reply to shipping queries. Called if sendInvoice used is_flexible.",
     category: "payments",
@@ -69,6 +72,7 @@ export const paymentMethods: MethodDef[] = [
   },
   {
     apiMethod: "answerPreCheckoutQuery",
+    annotations: ANNOTATIONS.send,
     toolName: "answer_pre_checkout_query",
     description: "Respond to pre-checkout queries. Must answer within 10 seconds.",
     category: "payments",
@@ -83,6 +87,7 @@ export const paymentMethods: MethodDef[] = [
   },
   {
     apiMethod: "getStarTransactions",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_star_transactions",
     description: "Get the bot's Telegram Star transactions.",
     category: "payments",
@@ -96,6 +101,7 @@ export const paymentMethods: MethodDef[] = [
   },
   {
     apiMethod: "getMyStarBalance",
+    annotations: ANNOTATIONS.readOnly,
     toolName: "get_my_star_balance",
     description: "Get the bot's Telegram Stars balance (v9.1).",
     category: "payments",
@@ -105,6 +111,7 @@ export const paymentMethods: MethodDef[] = [
     params: [],
   },
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "refundStarPayment",
     toolName: "refund_star_payment",
     description: "Refund a Telegram Star payment.",

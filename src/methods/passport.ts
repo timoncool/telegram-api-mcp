@@ -1,8 +1,9 @@
 import { z } from "zod";
-import { MethodDef, UserId } from "../method-registry.js";
+import { MethodDef, UserId ,  ANNOTATIONS } from "../method-registry.js";
 
 export const passportMethods: MethodDef[] = [
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "setPassportDataErrors", toolName: "set_passport_data_errors",
     description: "Inform a user that some Telegram Passport elements contain errors.", category: "passport",
     needsChatId: false, canUploadFiles: false, returns: "true",

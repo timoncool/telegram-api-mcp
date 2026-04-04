@@ -1,14 +1,16 @@
 import { z } from "zod";
-import { MethodDef, ChatId, UserId } from "../method-registry.js";
+import { MethodDef, ChatId, UserId ,  ANNOTATIONS } from "../method-registry.js";
 
 export const giftMethods: MethodDef[] = [
   {
+    annotations: ANNOTATIONS.readOnly,
     apiMethod: "getAvailableGifts", toolName: "get_available_gifts",
     description: "Get the list of gifts that can be sent.", category: "gifts",
     needsChatId: false, canUploadFiles: false, returns: "Gifts",
     params: [],
   },
   {
+    annotations: ANNOTATIONS.send,
     apiMethod: "sendGift", toolName: "send_gift",
     description: "Send a gift to a user.", category: "gifts",
     needsChatId: false, canUploadFiles: false, returns: "true",
@@ -21,6 +23,7 @@ export const giftMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.readOnly,
     apiMethod: "getUserGifts", toolName: "get_user_gifts",
     description: "Get gifts received by a user (v9.3).", category: "gifts",
     needsChatId: false, canUploadFiles: false, returns: "UserGifts",
@@ -29,6 +32,7 @@ export const giftMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.readOnly,
     apiMethod: "getChatGifts", toolName: "get_chat_gifts",
     description: "Get gifts received by a chat (v9.3).", category: "gifts",
     needsChatId: true, canUploadFiles: false, returns: "ChatGifts",
@@ -37,6 +41,7 @@ export const giftMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "convertGiftToStars", toolName: "convert_gift_to_stars",
     description: "Convert a gift to Telegram Stars (v9.0).", category: "gifts",
     needsChatId: false, canUploadFiles: false, returns: "true",
@@ -46,6 +51,7 @@ export const giftMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "upgradeGift", toolName: "upgrade_gift",
     description: "Upgrade a gift to a unique gift (v9.0).", category: "gifts",
     needsChatId: false, canUploadFiles: false, returns: "true",
@@ -55,6 +61,7 @@ export const giftMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "transferGift", toolName: "transfer_gift",
     description: "Transfer a gift to another user (v9.0).", category: "gifts",
     needsChatId: false, canUploadFiles: false, returns: "true",
@@ -65,6 +72,7 @@ export const giftMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.send,
     apiMethod: "giftPremiumSubscription", toolName: "gift_premium_subscription",
     description: "Gift a Telegram Premium subscription (v9.0).", category: "gifts",
     needsChatId: false, canUploadFiles: false, returns: "true",

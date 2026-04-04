@@ -1,8 +1,9 @@
 import { z } from "zod";
-import { MethodDef, BooleanFlag } from "../method-registry.js";
+import { MethodDef, BooleanFlag ,  ANNOTATIONS } from "../method-registry.js";
 
 export const inlineMethods: MethodDef[] = [
   {
+    annotations: ANNOTATIONS.send,
     apiMethod: "answerInlineQuery", toolName: "answer_inline_query",
     description: "Send answers to an inline query. Max 50 results per query.", category: "inline",
     needsChatId: false, canUploadFiles: false, returns: "true",
@@ -16,6 +17,7 @@ export const inlineMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.send,
     apiMethod: "answerCallbackQuery", toolName: "answer_callback_query",
     description: "Answer a callback query from an inline keyboard button.", category: "inline",
     needsChatId: false, canUploadFiles: false, returns: "true",

@@ -1,8 +1,9 @@
 import { z } from "zod";
-import { MethodDef, ChatId } from "../method-registry.js";
+import { MethodDef, ChatId ,  ANNOTATIONS } from "../method-registry.js";
 
 export const storyMethods: MethodDef[] = [
   {
+    annotations: ANNOTATIONS.send,
     apiMethod: "postStory", toolName: "post_story",
     description: "Post a story on behalf of a business account (v9.0).", category: "stories",
     needsChatId: false, canUploadFiles: false, returns: "Story",
@@ -18,6 +19,7 @@ export const storyMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.modify,
     apiMethod: "editStory", toolName: "edit_story",
     description: "Edit a posted story (v9.0).", category: "stories",
     needsChatId: false, canUploadFiles: false, returns: "Story",
@@ -32,6 +34,7 @@ export const storyMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.destructive,
     apiMethod: "deleteStory", toolName: "delete_story",
     description: "Delete a story (v9.0).", category: "stories",
     needsChatId: false, canUploadFiles: false, returns: "true",
@@ -41,6 +44,7 @@ export const storyMethods: MethodDef[] = [
     ],
   },
   {
+    annotations: ANNOTATIONS.send,
     apiMethod: "repostStory", toolName: "repost_story",
     description: "Repost a story to another chat (v9.3).", category: "stories",
     needsChatId: true, canUploadFiles: false, returns: "Story",

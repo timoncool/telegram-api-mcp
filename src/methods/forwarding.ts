@@ -1,9 +1,10 @@
 import { z } from "zod";
-import { MethodDef, ChatId, BooleanFlag } from "../method-registry.js";
+import { MethodDef, ChatId, BooleanFlag ,  ANNOTATIONS } from "../method-registry.js";
 
 export const forwardingMethods: MethodDef[] = [
   {
     apiMethod: "forwardMessage",
+    annotations: ANNOTATIONS.send,
     toolName: "forward_message",
     description: "Forward a message from one chat to another.",
     category: "forwarding",
@@ -21,6 +22,7 @@ export const forwardingMethods: MethodDef[] = [
   },
   {
     apiMethod: "forwardMessages",
+    annotations: ANNOTATIONS.send,
     toolName: "forward_messages",
     description: "Forward multiple messages at once (maintains album grouping).",
     category: "forwarding",
@@ -38,6 +40,7 @@ export const forwardingMethods: MethodDef[] = [
   },
   {
     apiMethod: "copyMessage",
+    annotations: ANNOTATIONS.send,
     toolName: "copy_message",
     description: "Copy a message (sends without 'Forwarded from' header). Can change caption.",
     category: "forwarding",
@@ -61,6 +64,7 @@ export const forwardingMethods: MethodDef[] = [
   },
   {
     apiMethod: "copyMessages",
+    annotations: ANNOTATIONS.send,
     toolName: "copy_messages",
     description: "Copy multiple messages at once.",
     category: "forwarding",

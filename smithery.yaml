@@ -1,0 +1,27 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    required:
+      - telegramBotToken
+    properties:
+      telegramBotToken:
+        type: string
+        description: Telegram Bot API token from @BotFather
+      defaultChatId:
+        type: string
+        description: Default chat ID for all tools (optional)
+      metaMode:
+        type: boolean
+        description: Use 2-tool meta mode instead of 175 tools (saves ~99% context tokens)
+        default: false
+  commandFunction: |-
+    (config) => ({
+      command: 'npx',
+      args: ['-y', 'telegram-api-mcp'],
+      env: {
+        TELEGRAM_BOT_TOKEN: config.telegramBotToken,
+        ...(config.defaultChatId ? { TELEGRAM_DEFAULT_CHAT_ID: config.defaultChatId } : {}),
+        ...(config.metaMode ? { TELEGRAM_META_MODE: 'true' } : {})
+      }
+    })
