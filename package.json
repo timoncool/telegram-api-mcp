@@ -1,0 +1,48 @@
+{
+  "name": "telegram-api-mcp",
+  "version": "0.1.0",
+  "description": "Ultimate Telegram Bot API MCP Server — full v9.6 coverage, meta-mode, rate limiting, circuit breaker",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "telegram-api-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "telegram",
+    "bot-api",
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "claude",
+    "ai-agent"
+  ],
+  "author": "timoncool",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/timoncool/telegram-api-mcp.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0",
+    "tsx": "^4.19.0"
+  }
+}
