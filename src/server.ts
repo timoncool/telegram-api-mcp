@@ -6,6 +6,7 @@ import { TelegramClient, TelegramApiError } from "./telegram-client.js";
 import { MethodDef, buildZodSchema } from "./method-registry.js";
 import { allMethods, searchMethods, findMethodByApiName } from "./methods/index.js";
 import { CircuitOpenError } from "./circuit-breaker.js";
+import { logPost, getPostHistory } from "./post-log.js";
 
 /** Pre-built Zod schemas for all methods (built once, reused on every call). */
 const schemaCache = new Map<string, ReturnType<typeof buildZodSchema>>();
@@ -35,6 +36,8 @@ export async function startServer(config: Config): Promise<void> {
   } else {
     registerAllTools(server, client);
   }
+
+  registerPostHistoryTool(server);
 
   const shutdown = () => {
     client.destroy();
@@ -133,6 +136,30 @@ function registerMetaTools(server: McpServer, client: TelegramClient): void {
   );
 }
 
+// ─── Post History ───────────────────────────────────────────────────────
+
+function registerPostHistoryTool(server: McpServer): void {
+  server.tool(
+    "get_post_history",
+    "Get history of messages sent by this bot. Use to check what was already posted to a chat before posting again. Returns newest first.",
+    {
+      chat_id: z.union([z.number().int(), z.string()]).optional().describe("Filter by chat ID. Omit to see all chats."),
+      limit: z.number().int().min(1).max(200).optional().describe("Max entries to return (default: 50)"),
+    },
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    async (params) => {
+      const entries = await getPostHistory(params.chat_id, params.limit ?? 50);
+      if (entries.length === 0) {
+        return { content: [{ type: "text" as const, text: "No posts found for this chat." }] };
+      }
+      const text = entries.map((e) =>
+        `[${e.timestamp}] ${e.method} → chat ${e.chat_id} (msg ${e.message_id ?? "?"})${e.caption_preview ? `: ${e.caption_preview}` : ""}`
+      ).join("\n");
+      return { content: [{ type: "text" as const, text: `${entries.length} post(s):\n\n${text}` }] };
+    }
+  );
+}
+
 // ─── Execution ──────────────────────────────────────────────────────────
 
 /** For meta-mode: validate then call. */
@@ -158,6 +185,16 @@ async function executeMethod(
   return callTelegram(client, method, parseResult.data as Record<string, unknown>);
 }
 
+/** Methods that produce posts/messages worth logging. */
+const LOGGED_METHODS = new Set([
+  "sendMessage", "sendPhoto", "sendVideo", "sendDocument", "sendAudio",
+  "sendAnimation", "sendVoice", "sendVideoNote", "sendMediaGroup",
+  "sendPaidMedia", "sendSticker", "sendLocation", "sendVenue", "sendContact",
+  "sendPoll", "sendDice", "sendChecklist", "sendGame", "sendInvoice",
+  "sendGift", "sendMessageDraft", "forwardMessage", "forwardMessages",
+  "copyMessage", "copyMessages", "postStory",
+]);
+
 /** For standard mode: already validated by SDK, just call. */
 async function callTelegram(
   client: TelegramClient,
@@ -166,6 +203,21 @@ async function callTelegram(
 ): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
   try {
     const result = await client.call(method.apiMethod, params);
+
+    // Auto-log send/forward/copy/post calls
+    if (LOGGED_METHODS.has(method.apiMethod) && result && typeof result === "object") {
+      const r = result as Record<string, unknown>;
+      logPost({
+        timestamp: new Date().toISOString(),
+        method: method.apiMethod,
+        chat_id: (params.chat_id as string | number) ?? "",
+        message_id: (r.message_id as number) ?? undefined,
+        caption_preview: truncateForLog(
+          (params.caption as string) ?? (params.text as string) ?? ""
+        ),
+      }).catch(() => {}); // fire-and-forget, don't block response
+    }
+
     const text = formatResult(method.apiMethod, result);
     return { content: [{ type: "text", text }] };
   } catch (error) {
@@ -200,6 +252,10 @@ function formatResult(method: string, result: unknown): string {
   }
 
   return text;
+}
+
+function truncateForLog(s: string): string {
+  return s.length > 100 ? s.slice(0, 100) + "..." : s;
 }
 
 function log(level: "info" | "warn" | "error", msg: string): void {
