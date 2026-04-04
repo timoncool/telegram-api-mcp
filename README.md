@@ -193,6 +193,10 @@ src/
 - No telemetry, no analytics, no phone-home
 - Zero bloat: only 2 runtime dependencies (`@modelcontextprotocol/sdk` + `zod`)
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=timoncool/telegram-api-mcp&type=Date)](https://star-history.com/#timoncool/telegram-api-mcp&Date)
+
 ## Development
 
 ```bash
@@ -203,6 +207,12 @@ npm test              # Run all tests (vitest)
 npm run test:watch    # Watch mode
 npm run lint          # ESLint
 ```
+
+## Other MCP Servers
+
+| Server | Description |
+|--------|-------------|
+| [civitai-mcp-ultimate](https://github.com/timoncool/civitai-mcp-ultimate) | Civitai API — search models, browse images with prompts, download LoRAs/Checkpoints |
 
 ## License
 
