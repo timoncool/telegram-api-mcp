@@ -7,12 +7,18 @@ import { MethodDef, buildZodSchema } from "./method-registry.js";
 import { allMethods, searchMethods, findMethodByApiName } from "./methods/index.js";
 import { CircuitOpenError } from "./circuit-breaker.js";
 
-/**
- * Create and start the MCP server.
- * Two modes:
- * - Standard: one tool per Bot API method (~150+ tools)
- * - Meta: two tools (telegram_find + telegram_call) for token economy
- */
+/** Pre-built Zod schemas for all methods (built once, reused on every call). */
+const schemaCache = new Map<string, ReturnType<typeof buildZodSchema>>();
+
+function getSchema(method: MethodDef): ReturnType<typeof buildZodSchema> {
+  let schema = schemaCache.get(method.apiMethod);
+  if (!schema) {
+    schema = buildZodSchema(method.params);
+    schemaCache.set(method.apiMethod, schema);
+  }
+  return schema;
+}
+
 export async function startServer(config: Config): Promise<void> {
   const client = new TelegramClient(config);
 
@@ -21,13 +27,15 @@ export async function startServer(config: Config): Promise<void> {
     version: "0.1.0",
   });
 
+  // Log before connect (connect blocks on stdio transport)
+  log("info", `Starting server in ${config.metaMode ? "meta" : "standard"} mode with ${allMethods.length} methods`);
+
   if (config.metaMode) {
     registerMetaTools(server, client);
   } else {
     registerAllTools(server, client);
   }
 
-  // Graceful shutdown
   const shutdown = () => {
     client.destroy();
     process.exit(0);
@@ -35,34 +43,31 @@ export async function startServer(config: Config): Promise<void> {
   process.on("SIGINT", shutdown);
   process.on("SIGTERM", shutdown);
 
-  // Start stdio transport
   const transport = new StdioServerTransport();
   await server.connect(transport);
-
-  log("info", `Server started in ${config.metaMode ? "meta" : "standard"} mode with ${allMethods.length} methods`);
 }
 
-// ─── Standard Mode: one tool per method ─────────────────────────────────
+// ─── Standard Mode ──────────────────────────────────────────────────────
 
 function registerAllTools(server: McpServer, client: TelegramClient): void {
   for (const method of allMethods) {
-    const zodSchema = buildZodSchema(method.params);
+    const zodSchema = getSchema(method);
 
     server.tool(
       method.toolName,
       method.description,
       zodSchema.shape,
       async (params) => {
-        return executeMethod(client, method, params as Record<string, unknown>);
+        // SDK already validated with zodSchema.shape — pass directly to API
+        return callTelegram(client, method, params as Record<string, unknown>);
       }
     );
   }
 }
 
-// ─── Meta Mode: 2 tools for token economy ───────────────────────────────
+// ─── Meta Mode ──────────────────────────────────────────────────────────
 
 function registerMetaTools(server: McpServer, client: TelegramClient): void {
-  // Tool 1: Find methods by keyword
   server.tool(
     "telegram_find",
     "Search Telegram Bot API methods by keyword. Returns matching methods with their parameters. Use this to discover available methods before calling them.",
@@ -105,7 +110,6 @@ function registerMetaTools(server: McpServer, client: TelegramClient): void {
     }
   );
 
-  // Tool 2: Call any method
   server.tool(
     "telegram_call",
     "Call any Telegram Bot API method. Use telegram_find first to discover method names and required parameters.",
@@ -127,32 +131,38 @@ function registerMetaTools(server: McpServer, client: TelegramClient): void {
   );
 }
 
-// ─── Shared execution logic ─────────────────────────────────────────────
+// ─── Execution ──────────────────────────────────────────────────────────
 
+/** For meta-mode: validate then call. */
 async function executeMethod(
   client: TelegramClient,
   method: MethodDef,
   params: Record<string, unknown>
 ): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
+  const schema = getSchema(method);
+  const parseResult = schema.safeParse(params);
+
+  if (!parseResult.success) {
+    const errors = parseResult.error.issues
+      .map((i) => `  ${i.path.join(".")}: ${i.message}`)
+      .join("\n");
+    return {
+      content: [{ type: "text", text: `Validation error for ${method.apiMethod}:\n${errors}` }],
+      isError: true,
+    };
+  }
+
+  return callTelegram(client, method, parseResult.data as Record<string, unknown>);
+}
+
+/** For standard mode: already validated by SDK, just call. */
+async function callTelegram(
+  client: TelegramClient,
+  method: MethodDef,
+  params: Record<string, unknown>
+): Promise<{ content: { type: "text"; text: string }[]; isError?: boolean }> {
   try {
-    // Validate params
-    const schema = buildZodSchema(method.params);
-    const parseResult = schema.safeParse(params);
-
-    if (!parseResult.success) {
-      const errors = parseResult.error.issues
-        .map((i) => `  ${i.path.join(".")}: ${i.message}`)
-        .join("\n");
-      return {
-        content: [{ type: "text", text: `Validation error for ${method.apiMethod}:\n${errors}` }],
-        isError: true,
-      };
-    }
-
-    // Call Telegram API
-    const result = await client.call(method.apiMethod, parseResult.data as Record<string, unknown>);
-
-    // Format response
+    const result = await client.call(method.apiMethod, params);
     const text = formatResult(method.apiMethod, result);
     return { content: [{ type: "text", text }] };
   } catch (error) {
@@ -171,11 +181,9 @@ async function executeMethod(
 
 function formatResult(method: string, result: unknown): string {
   if (result === true) return `${method}: Success`;
-
   if (typeof result === "object" && result !== null) {
     return JSON.stringify(result, null, 2);
   }
-
   return String(result);
 }
 

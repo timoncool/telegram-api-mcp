@@ -112,7 +112,7 @@ describe("Method Registry", () => {
       "getManagedBotToken", "replaceManagedBotToken", "savePreparedKeyboardButton",
       "getMe", "setMyCommands", "getFile",
       "getUpdates", "setWebhook",
-      "sendChecklist", "sendMessageDraft",
+      "sendChecklist",
       "approveSuggestedPost", "getUserProfileAudios",
     ];
 

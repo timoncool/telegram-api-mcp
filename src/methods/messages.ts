@@ -23,22 +23,7 @@ export const messageMethods: MethodDef[] = [
       ...commonSendParams(),
     ],
   },
-  {
-    apiMethod: "sendMessageDraft",
-    toolName: "send_message_draft",
-    description: "Send a streaming draft message. Useful for showing partial content during generation.",
-    category: "messages",
-    needsChatId: true,
-    canUploadFiles: false,
-    returns: "Message",
-    params: [
-      { name: "chat_id", type: ChatId, required: true, description: "Target chat ID or @username" },
-      { name: "text", type: Text, required: true, description: "Draft message text" },
-      { name: "parse_mode", type: ParseMode, required: false, description: "Text formatting mode" },
-      { name: "entities", type: MessageEntities, required: false, description: "Special entities in text" },
-      ...commonSendParams(),
-    ],
-  },
+  // sendMessageDraft is in other.ts
   {
     apiMethod: "sendPhoto",
     toolName: "send_photo",

@@ -1,10 +1,12 @@
 import { readFile, stat } from "node:fs/promises";
-import { basename, isAbsolute, resolve, normalize } from "node:path";
+import { basename, isAbsolute, resolve, normalize, sep } from "node:path";
 import { Config } from "./config.js";
 import { RateLimiter } from "./rate-limiter.js";
 import { CircuitBreaker, CircuitOpenError } from "./circuit-breaker.js";
 
-/** Telegram API response shape. */
+/** Default fetch timeout: 60 seconds */
+const FETCH_TIMEOUT_MS = 60_000;
+
 interface TelegramResponse {
   ok: boolean;
   result?: unknown;
@@ -16,13 +18,11 @@ interface TelegramResponse {
   };
 }
 
-/** Logger that goes to stderr (stdout is reserved for MCP protocol). */
 function log(level: "info" | "warn" | "error", msg: string): void {
   const ts = new Date().toISOString();
   process.stderr.write(`[${ts}] [${level.toUpperCase()}] ${msg}\n`);
 }
 
-/** Mask token in strings to prevent leaks. */
 function maskToken(str: string, token: string): string {
   return str.replaceAll(token, "***");
 }
@@ -45,49 +45,38 @@ export class TelegramClient {
       config.circuitBreakerCooldown
     );
 
-    // Periodically clean up stale rate limiter buckets
     this.cleanupInterval = setInterval(() => this.rateLimiter.cleanup(), 60_000);
+    this.cleanupInterval.unref(); // Don't prevent Node.js from exiting
+
+    // Warn if no upload directory restrictions
+    if (config.allowedUploadDirs.length === 0) {
+      log("warn", "TELEGRAM_ALLOWED_UPLOAD_DIRS not set — file uploads unrestricted. Set it to restrict paths.");
+    }
   }
 
   destroy(): void {
     clearInterval(this.cleanupInterval);
   }
 
-  /**
-   * Call a Telegram Bot API method.
-   * Handles rate limiting, circuit breaker, retries, and file uploads.
-   */
   async call(method: string, params: Record<string, unknown> = {}): Promise<unknown> {
-    // Apply defaults
     const resolvedParams = this.applyDefaults(params);
-
-    // Determine chat_id for per-chat rate limiting
     const chatId = resolvedParams.chat_id as string | undefined;
 
-    // Circuit breaker check
     this.circuitBreaker.check();
-
-    // Rate limiting
     await this.rateLimiter.acquire(chatId);
 
-    // Check if any param contains a local file path
     const hasFiles = this.hasFileParams(resolvedParams);
-
-    // Execute with retry
     return this.callWithRetry(method, resolvedParams, hasFiles);
   }
 
   private applyDefaults(params: Record<string, unknown>): Record<string, unknown> {
     const result = { ...params };
-
     if (!result.chat_id && this.config.defaultChatId) {
       result.chat_id = this.config.defaultChatId;
     }
-
     if (!result.message_thread_id && this.config.defaultThreadId) {
       result.message_thread_id = this.config.defaultThreadId;
     }
-
     return result;
   }
 
@@ -114,17 +103,19 @@ export class TelegramClient {
         throw error;
       }
 
-      // 429: respect retry_after
-      if (err.statusCode === 429 && err.retryAfter) {
+      // 429: respect retry_after (or default 5s if not provided)
+      if (err.statusCode === 429) {
         if (attempt <= this.config.maxRetries) {
-          const waitMs = err.retryAfter * 1000;
-          log("warn", `Rate limited on ${method}, waiting ${err.retryAfter}s (attempt ${attempt}/${this.config.maxRetries})`);
+          const retryAfter = err.retryAfter ?? 5;
+          const waitMs = retryAfter * 1000;
+          log("warn", `Rate limited on ${method}, waiting ${retryAfter}s (attempt ${attempt}/${this.config.maxRetries})`);
           await sleep(waitMs);
           return this.callWithRetry(method, params, hasFiles, attempt + 1);
         }
+        throw error; // Exhausted retries on 429
       }
 
-      // Record failure for circuit breaker
+      // Record failure for circuit breaker (429 already handled above)
       const justOpened = this.circuitBreaker.recordFailure(err.statusCode);
       if (justOpened) {
         log("error", `Circuit breaker OPENED after ${this.config.circuitBreakerThreshold} failures`);
@@ -142,19 +133,24 @@ export class TelegramClient {
     }
   }
 
-  /** JSON-only API call (no file uploads). */
   private async callJson(method: string, params: Record<string, unknown>): Promise<unknown> {
     const url = `${this.baseUrl}/${method}`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(params),
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
-    return this.handleResponse(method, response);
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(params),
+        signal: controller.signal,
+      });
+      return this.handleResponse(method, response);
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
-  /** Multipart API call (with file uploads). */
   private async callMultipart(method: string, params: Record<string, unknown>): Promise<unknown> {
     const url = `${this.baseUrl}/${method}`;
     const formData = new FormData();
@@ -172,12 +168,19 @@ export class TelegramClient {
       }
     }
 
-    const response = await fetch(url, {
-      method: "POST",
-      body: formData,
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
-    return this.handleResponse(method, response);
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        body: formData,
+        signal: controller.signal,
+      });
+      return this.handleResponse(method, response);
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   private async handleResponse(method: string, response: Response): Promise<unknown> {
@@ -206,7 +209,6 @@ export class TelegramClient {
     return data.result;
   }
 
-  /** Check if any param value looks like a local file path. */
   private hasFileParams(params: Record<string, unknown>): boolean {
     const fileFields = new Set([
       "photo", "audio", "document", "video", "animation", "voice",
@@ -222,10 +224,8 @@ export class TelegramClient {
     return false;
   }
 
-  /** Check if a string is a valid, existing local file path. */
   private async isLocalFile(value: string): Promise<boolean> {
     if (!isAbsolute(value)) return false;
-
     try {
       const info = await stat(value);
       return info.isFile();
@@ -234,16 +234,16 @@ export class TelegramClient {
     }
   }
 
-  /** Read a local file with security checks. */
   private async readLocalFile(filePath: string): Promise<Blob> {
-    // Normalize and resolve to prevent path traversal
     const resolved = resolve(normalize(filePath));
 
-    // Check allowed directories if configured
+    // Path traversal protection: require trailing separator in comparison
     if (this.config.allowedUploadDirs.length > 0) {
-      const isAllowed = this.config.allowedUploadDirs.some((dir) =>
-        resolved.startsWith(resolve(normalize(dir)))
-      );
+      const isAllowed = this.config.allowedUploadDirs.some((dir) => {
+        const normalizedDir = resolve(normalize(dir));
+        const dirWithSep = normalizedDir.endsWith(sep) ? normalizedDir : normalizedDir + sep;
+        return resolved.startsWith(dirWithSep) || resolved === normalizedDir;
+      });
       if (!isAllowed) {
         throw new Error(
           `File upload blocked: ${resolved} is not in allowed directories. ` +
@@ -252,7 +252,6 @@ export class TelegramClient {
       }
     }
 
-    // Check file size
     const info = await stat(resolved);
     if (info.size > this.config.maxFileSize) {
       throw new Error(
@@ -263,13 +262,6 @@ export class TelegramClient {
 
     const buffer = await readFile(resolved);
     return new Blob([buffer]);
-  }
-
-  /** Get file download path (without leaking token). */
-  getFileUrl(filePath: string): string {
-    // Return relative path — let the user construct the URL themselves
-    // This prevents token leakage in MCP tool responses
-    return filePath;
   }
 }
 

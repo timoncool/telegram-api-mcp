@@ -1,6 +1,6 @@
 /**
  * Two-level rate limiter: global (per second) + per-chat (per minute).
- * Uses token bucket algorithm — no race conditions with async.
+ * Uses token bucket algorithm with async mutex to prevent race conditions.
  */
 export class RateLimiter {
   private globalTokens: number;
@@ -9,6 +9,9 @@ export class RateLimiter {
 
   private chatBuckets = new Map<string, { tokens: number; lastRefill: number }>();
   private chatMax: number;
+
+  /** Async mutex: serializes all acquire calls to prevent race conditions */
+  private queue: Promise<void> = Promise.resolve();
 
   constructor(globalPerSecond: number, perChatPerMinute: number) {
     this.globalMax = globalPerSecond;
@@ -19,20 +22,19 @@ export class RateLimiter {
 
   /**
    * Wait until a request to the given chat is allowed.
-   * Returns the delay in ms that was waited (0 if immediate).
+   * Serialized via promise chain — no concurrent access to token state.
    */
   async acquire(chatId?: string): Promise<number> {
-    let totalWait = 0;
-
-    // Global bucket
-    totalWait += await this.acquireGlobal();
-
-    // Per-chat bucket (only for send-like operations)
-    if (chatId) {
-      totalWait += await this.acquireChat(String(chatId));
-    }
-
-    return totalWait;
+    return new Promise<number>((resolve) => {
+      this.queue = this.queue.then(async () => {
+        let totalWait = 0;
+        totalWait += await this.acquireGlobal();
+        if (chatId) {
+          totalWait += await this.acquireChat(String(chatId));
+        }
+        resolve(totalWait);
+      });
+    });
   }
 
   private async acquireGlobal(): Promise<number> {
@@ -43,7 +45,6 @@ export class RateLimiter {
       return 0;
     }
 
-    // Wait for one token to refill
     const waitMs = Math.ceil(1000 / this.globalMax);
     await sleep(waitMs);
     this.refillGlobal();
@@ -66,7 +67,6 @@ export class RateLimiter {
       this.chatBuckets.set(chatId, bucket);
     }
 
-    // Refill based on elapsed time
     const now = Date.now();
     const elapsed = now - bucket.lastRefill;
     const refill = (elapsed / 60000) * this.chatMax;
@@ -78,17 +78,21 @@ export class RateLimiter {
       return 0;
     }
 
-    // Wait for one token
     const waitMs = Math.ceil(60000 / this.chatMax);
     await sleep(waitMs);
-    bucket.tokens = 0;
-    bucket.lastRefill = Date.now();
+    // Re-refill after sleep (time passed, new tokens available)
+    const nowAfter = Date.now();
+    const elapsedAfter = nowAfter - bucket.lastRefill;
+    const refillAfter = (elapsedAfter / 60000) * this.chatMax;
+    bucket.tokens = Math.min(this.chatMax, bucket.tokens + refillAfter);
+    bucket.lastRefill = nowAfter;
+    bucket.tokens = Math.max(0, bucket.tokens - 1);
     return waitMs;
   }
 
   /** Clean up stale per-chat buckets (call periodically). */
   cleanup(): void {
-    const cutoff = Date.now() - 120_000; // 2 minutes
+    const cutoff = Date.now() - 120_000;
     for (const [chatId, bucket] of this.chatBuckets) {
       if (bucket.lastRefill < cutoff) {
         this.chatBuckets.delete(chatId);

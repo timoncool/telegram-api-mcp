@@ -15,6 +15,7 @@ import { inlineMethods } from "./inline.js";
 import { managedBotMethods } from "./managed-bots.js";
 import { updateMethods } from "./updates.js";
 import { passportMethods } from "./passport.js";
+import { otherMethods } from "./other.js";
 
 /**
  * Complete registry of ALL Telegram Bot API 9.6 methods.
@@ -37,6 +38,7 @@ export const allMethods: MethodDef[] = [
   ...managedBotMethods,
   ...updateMethods,
   ...passportMethods,
+  ...otherMethods,
 ];
 
 /** Lookup method by tool name */
