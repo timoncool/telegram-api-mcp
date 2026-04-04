@@ -38,6 +38,7 @@ export async function startServer(config: Config): Promise<void> {
   }
 
   registerPostHistoryTool(server);
+  registerDownloadTool(server, client);
 
   const shutdown = () => {
     client.destroy();
@@ -156,6 +157,38 @@ function registerPostHistoryTool(server: McpServer): void {
         `[${e.timestamp}] ${e.method} → chat ${e.chat_id} (msg ${e.message_id ?? "?"})${e.caption_preview ? `: ${e.caption_preview}` : ""}`
       ).join("\n");
       return { content: [{ type: "text" as const, text: `${entries.length} post(s):\n\n${text}` }] };
+    }
+  );
+}
+
+// ─── Download ───────────────────────────────────────────────────────────
+
+function registerDownloadTool(server: McpServer, client: TelegramClient): void {
+  const defaultDir = process.env.TELEGRAM_DOWNLOAD_DIR || (process.platform === "win32"
+    ? `${process.env.USERPROFILE || "C:\\Users\\user"}\\Downloads\\telegram-mcp`
+    : `${process.env.HOME || "/tmp"}/telegram-mcp-downloads`);
+
+  server.tool(
+    "download_file",
+    "Download a file from Telegram by file_id. Saves locally and returns the path. Use after receiving a message with a photo, video, document, voice, etc. Max 20MB (Telegram Bot API limit).",
+    {
+      file_id: z.string().describe("File ID from a message (photo[-1].file_id, document.file_id, video.file_id, etc.)"),
+      dest_dir: z.string().optional().describe(`Directory to save to (default: ${defaultDir})`),
+    },
+    { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+    async (params) => {
+      try {
+        const dir = params.dest_dir || defaultDir;
+        const localPath = await client.downloadFile(params.file_id, dir);
+        return {
+          content: [{ type: "text" as const, text: `Downloaded to: ${localPath}` }],
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text" as const, text: `Download failed: ${(error as Error).message}` }],
+          isError: true,
+        };
+      }
     }
   );
 }

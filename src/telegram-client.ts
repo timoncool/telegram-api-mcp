@@ -1,5 +1,5 @@
-import { readFile, stat } from "node:fs/promises";
-import { basename, isAbsolute, resolve, normalize, sep } from "node:path";
+import { readFile, writeFile, stat, mkdir } from "node:fs/promises";
+import { basename, dirname, isAbsolute, join, resolve, normalize, sep } from "node:path";
 import { Config } from "./config.js";
 import { RateLimiter } from "./rate-limiter.js";
 import { CircuitBreaker, CircuitOpenError } from "./circuit-breaker.js";
@@ -262,6 +262,51 @@ export class TelegramClient {
 
     const buffer = await readFile(resolved);
     return new Blob([buffer]);
+  }
+
+  /** Download a file by file_id. Returns the local path. */
+  async downloadFile(fileId: string, destDir: string): Promise<string> {
+    // Step 1: getFile to get file_path
+    const fileInfo = (await this.call("getFile", { file_id: fileId })) as {
+      file_id: string;
+      file_path?: string;
+      file_size?: number;
+    };
+
+    if (!fileInfo.file_path) {
+      throw new Error("Telegram returned no file_path — file may be too large (>20MB)");
+    }
+
+    // Step 2: download from https://api.telegram.org/file/bot<token>/<file_path>
+    const url = `https://api.telegram.org/file/bot${this.token}/${fileInfo.file_path}`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 120_000);
+
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      if (!response.ok) {
+        throw new Error(`Download failed: HTTP ${response.status}`);
+      }
+
+      const buffer = Buffer.from(await response.arrayBuffer());
+
+      // Determine filename from file_path
+      const fileName = fileInfo.file_path.split("/").pop() || `file_${fileId}`;
+      const destPath = resolve(normalize(join(destDir, fileName)));
+
+      // Security: ensure dest is inside destDir
+      const normalizedDir = resolve(normalize(destDir));
+      if (!destPath.startsWith(normalizedDir + sep) && destPath !== normalizedDir) {
+        throw new Error(`Path traversal blocked: ${destPath} is not inside ${normalizedDir}`);
+      }
+
+      await mkdir(dirname(destPath), { recursive: true });
+      await writeFile(destPath, buffer);
+
+      return destPath;
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 }
 
