@@ -52,6 +52,7 @@ export const paymentMethods: MethodDef[] = [
       { name: "currency", type: z.string(), required: true, description: "ISO 4217 currency code" },
       { name: "prices", type: z.any(), required: true, description: "Array of LabeledPrice" },
       { name: "provider_token", type: z.string(), required: false, description: "Payment provider token" },
+      { name: "business_connection_id", type: z.string(), required: false, description: "Business connection ID" },
     ],
   },
   {

@@ -16,6 +16,7 @@ export const storyMethods: MethodDef[] = [
       { name: "caption_entities", type: z.any(), required: false, description: "Caption entities" },
       { name: "areas", type: z.any(), required: false, description: "Array of StoryArea" },
       { name: "protect_content", type: z.boolean(), required: false, description: "Protect from forwarding" },
+      { name: "post_to_chat_page", type: z.boolean(), required: false, description: "Post story to the chat page" },
     ],
   },
   {

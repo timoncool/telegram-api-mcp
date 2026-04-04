@@ -123,7 +123,7 @@ function registerMetaTools(server: McpServer, client: TelegramClient): void {
       const methodDef = findMethodByApiName(args.method);
       if (!methodDef) {
         return {
-          content: [{ type: "text" as const, text: `Unknown method: ${args.method}. Use telegram_find to search for methods.` }],
+          content: [{ type: "text" as const, text: `Unknown method: "${args.method}". Use telegram_find to search for the correct method name. Method names are camelCase (e.g. sendMessage, not send_message).` }],
           isError: true,
         };
       }
@@ -148,8 +148,9 @@ async function executeMethod(
     const errors = parseResult.error.issues
       .map((i) => `  ${i.path.join(".")}: ${i.message}`)
       .join("\n");
+    const required = method.params.filter((p) => p.required).map((p) => p.name);
     return {
-      content: [{ type: "text", text: `Validation error for ${method.apiMethod}:\n${errors}` }],
+      content: [{ type: "text", text: `Validation error for ${method.apiMethod}:\n${errors}\n\nRequired params: ${required.join(", ") || "none"}. Use telegram_find(query: "${method.apiMethod}") to see full parameter list.` }],
       isError: true,
     };
   }

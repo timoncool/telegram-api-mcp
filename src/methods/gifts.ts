@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MethodDef, ChatId, UserId ,  ANNOTATIONS } from "../method-registry.js";
+import { MethodDef, ChatId, UserId, ANNOTATIONS } from "../method-registry.js";
 
 export const giftMethods: MethodDef[] = [
   {
@@ -12,14 +12,16 @@ export const giftMethods: MethodDef[] = [
   {
     annotations: ANNOTATIONS.send,
     apiMethod: "sendGift", toolName: "send_gift",
-    description: "Send a gift to a user.", category: "gifts",
+    description: "Send a gift to a user or channel chat.", category: "gifts",
     needsChatId: false, canUploadFiles: false, returns: "true",
     params: [
-      { name: "user_id", type: UserId, required: true, description: "Recipient user ID" },
+      { name: "user_id", type: UserId, required: false, description: "Recipient user ID (required if chat_id not set)" },
+      { name: "chat_id", type: ChatId, required: false, description: "Target chat ID (required if user_id not set, v8.3)" },
       { name: "gift_id", type: z.string(), required: true, description: "Gift ID" },
       { name: "text", type: z.string().max(255), required: false, description: "Gift message (0-255 chars)" },
       { name: "text_parse_mode", type: z.enum(["HTML", "Markdown", "MarkdownV2"]), required: false, description: "Text formatting" },
       { name: "text_entities", type: z.any(), required: false, description: "Text entities" },
+      { name: "pay_for_upgrade", type: z.boolean(), required: false, description: "Pay to upgrade the gift (v8.2)" },
     ],
   },
   {

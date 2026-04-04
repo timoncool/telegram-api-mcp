@@ -124,6 +124,61 @@ describe("TelegramClient", () => {
     clientRetry.destroy();
   });
 
+  it("does not retry on 4xx errors (except 429)", async () => {
+    let callCount = 0;
+    const mockFetch = vi.fn().mockImplementation(() => {
+      callCount++;
+      return Promise.resolve({
+        json: () => Promise.resolve({
+          ok: false,
+          error_code: 400,
+          description: "Bad Request: chat not found",
+        }),
+      });
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    await expect(client.call("sendMessage", { chat_id: 1, text: "hi" }))
+      .rejects.toThrow(TelegramApiError);
+    expect(callCount).toBe(1); // No retry on 400
+
+    vi.unstubAllGlobals();
+  });
+
+  it("applies default thread_id", async () => {
+    const clientWithThread = new TelegramClient(makeConfig({ defaultThreadId: 42 }));
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve({ ok: true, result: true }),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    await clientWithThread.call("sendMessage", { chat_id: 1, text: "hello" });
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(body.message_thread_id).toBe(42);
+
+    vi.unstubAllGlobals();
+    clientWithThread.destroy();
+  });
+
+  it("does not override explicit thread_id with default", async () => {
+    const clientWithThread = new TelegramClient(makeConfig({ defaultThreadId: 42 }));
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve({ ok: true, result: true }),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    await clientWithThread.call("sendMessage", { chat_id: 1, text: "hello", message_thread_id: 99 });
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(body.message_thread_id).toBe(99);
+
+    vi.unstubAllGlobals();
+    clientWithThread.destroy();
+  });
+
   afterEach(() => {
     client.destroy();
   });

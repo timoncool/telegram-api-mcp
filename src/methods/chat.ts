@@ -131,6 +131,10 @@ export const chatMethods: MethodDef[] = [
       { name: "can_pin_messages", type: BooleanFlag, required: false, description: "Can pin messages" },
       { name: "can_manage_topics", type: BooleanFlag, required: false, description: "Can manage forum topics" },
       { name: "can_manage_tags", type: BooleanFlag, required: false, description: "Can manage member tags (v9.5)" },
+      { name: "can_post_stories", type: BooleanFlag, required: false, description: "Can post stories in channels" },
+      { name: "can_edit_stories", type: BooleanFlag, required: false, description: "Can edit stories in channels" },
+      { name: "can_delete_stories", type: BooleanFlag, required: false, description: "Can delete stories in channels" },
+      { name: "can_manage_direct_messages", type: BooleanFlag, required: false, description: "Can manage direct messages in channels" },
     ],
   },
   {
@@ -352,7 +356,7 @@ export const chatMethods: MethodDef[] = [
   // ─── Invite Links ─────────────────────────────────────────────
   {
     apiMethod: "exportChatInviteLink",
-    annotations: ANNOTATIONS.readOnly,
+    annotations: ANNOTATIONS.destructive,
     toolName: "export_chat_invite_link",
     description: "Generate a new primary invite link (revokes previous one).",
     category: "invite",
@@ -454,19 +458,6 @@ export const chatMethods: MethodDef[] = [
     params: [
       { name: "chat_id", type: ChatId, required: true, description: "Chat ID" },
       { name: "user_id", type: UserId, required: true, description: "User ID" },
-    ],
-  },
-  {
-    apiMethod: "getChatBoosts",
-    annotations: ANNOTATIONS.readOnly,
-    toolName: "get_chat_boosts",
-    description: "Get all boosts in a chat.",
-    category: "chat",
-    needsChatId: true,
-    canUploadFiles: false,
-    returns: "ChatBoosts",
-    params: [
-      { name: "chat_id", type: ChatId, required: true, description: "Chat ID" },
     ],
   },
 ];

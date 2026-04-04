@@ -13,7 +13,7 @@ startCommand:
         description: Default chat ID for all tools (optional)
       metaMode:
         type: boolean
-        description: Use 2-tool meta mode instead of 175 tools (saves ~99% context tokens)
+        description: Use 2-tool meta mode instead of 169 tools (saves ~99% context tokens)
         default: false
   commandFunction: |-
     (config) => ({

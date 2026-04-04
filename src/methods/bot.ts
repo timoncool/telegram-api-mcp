@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MethodDef, FileInput, BooleanFlag ,  ANNOTATIONS } from "../method-registry.js";
+import { MethodDef, BooleanFlag, ANNOTATIONS } from "../method-registry.js";
 
 export const botMethods: MethodDef[] = [
   {
@@ -187,55 +187,6 @@ export const botMethods: MethodDef[] = [
     ],
   },
   {
-    apiMethod: "setMyDefaultParseMode",
-    annotations: ANNOTATIONS.modify,
-    toolName: "set_my_default_parse_mode",
-    description: "Set default parse mode for bot messages.",
-    category: "bot",
-    needsChatId: false,
-    canUploadFiles: false,
-    returns: "true",
-    params: [
-      { name: "parse_mode", type: z.enum(["HTML", "Markdown", "MarkdownV2"]), required: false, description: "Default parse mode" },
-    ],
-  },
-  {
-    apiMethod: "getMyDefaultParseMode",
-    annotations: ANNOTATIONS.readOnly,
-    toolName: "get_my_default_parse_mode",
-    description: "Get default parse mode.",
-    category: "bot",
-    needsChatId: false,
-    canUploadFiles: false,
-    returns: "DefaultParseMode",
-    params: [],
-  },
-  {
-    apiMethod: "setMyDefaultChatPermissions",
-    annotations: ANNOTATIONS.modify,
-    toolName: "set_my_default_chat_permissions",
-    description: "Set default chat permissions for the bot.",
-    category: "bot",
-    needsChatId: false,
-    canUploadFiles: false,
-    returns: "true",
-    params: [
-      { name: "permissions", type: z.any(), required: false, description: "ChatPermissions object" },
-      { name: "for_group_chats", type: BooleanFlag, required: false, description: "For group chats" },
-    ],
-  },
-  {
-    apiMethod: "getMyDefaultChatPermissions",
-    annotations: ANNOTATIONS.readOnly,
-    toolName: "get_my_default_chat_permissions",
-    description: "Get default chat permissions.",
-    category: "bot",
-    needsChatId: false,
-    canUploadFiles: false,
-    returns: "DefaultChatPermissions",
-    params: [],
-  },
-  {
     apiMethod: "setMyProfilePhoto",
     annotations: ANNOTATIONS.modify,
     toolName: "set_my_profile_photo",
@@ -245,7 +196,7 @@ export const botMethods: MethodDef[] = [
     canUploadFiles: true,
     returns: "true",
     params: [
-      { name: "photo", type: FileInput, required: false, description: "Photo file" },
+      { name: "photo", type: z.any(), required: true, description: "InputProfilePhoto object" },
     ],
   },
   {
@@ -260,17 +211,6 @@ export const botMethods: MethodDef[] = [
     params: [
       { name: "photo_id", type: z.string(), required: false, description: "Photo ID to remove" },
     ],
-  },
-  {
-    apiMethod: "getMyTopics",
-    annotations: ANNOTATIONS.readOnly,
-    toolName: "get_my_topics",
-    description: "Get forum topics created by the bot.",
-    category: "bot",
-    needsChatId: false,
-    canUploadFiles: false,
-    returns: "Array of ForumTopic",
-    params: [],
   },
   {
     apiMethod: "getUserProfilePhotos",

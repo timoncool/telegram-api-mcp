@@ -1,32 +1,42 @@
 # telegram-api-mcp
 
 [![Bot API](https://img.shields.io/badge/Telegram%20Bot%20API-9.6-26A5E4?logo=telegram)](https://core.telegram.org/bots/api)
+[![Methods](https://img.shields.io/badge/methods-169%2F169-brightgreen)](#api-coverage)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](#)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**Ultimate MCP server for Telegram Bot API** — 160 methods, full v9.6 coverage, meta-mode, rate limiting, circuit breaker.
+**Ultimate MCP server for Telegram Bot API** — 169 methods with full Bot API 9.6 coverage, meta-mode, rate limiting, circuit breaker, Zod validation.
 
-## Features
+## Why this server?
 
-- **160 Bot API methods** — messages, media, polls, chats, forums, stickers, payments, business, stories, gifts, games, inline, managed bots
-- **Bot API 9.6** (April 2026) — managed bots, revoting polls, shuffle options, poll descriptions
-- **Meta-mode** — 2 tools instead of 160 for ~99% context token savings
-- **Rate limiting** — global (per second) + per-chat (per minute), token bucket algorithm
-- **Circuit breaker** — auto-opens after consecutive failures, half-open recovery
-- **Retry with retry_after** — respects Telegram's 429 headers, exponential backoff
-- **File uploads** — multipart/form-data with streaming, path traversal protection
-- **Zod validation** — every parameter validated before hitting Telegram API
-- **Token safety** — bot token never appears in logs, responses, or error messages
-- **DEFAULT_CHAT_ID** — set once, skip chat_id in every call
-- **TypeScript strict** — noImplicitAny, noUnusedLocals, full type safety
-- **Zero bloat** — only 2 dependencies: `@modelcontextprotocol/sdk` + `zod`
+| Feature | telegram-api-mcp | FantomaSkaRus1 | TONresistor | 0xDEADBEEF |
+|---------|:---:|:---:|:---:|:---:|
+| Bot API methods | **169/169** | ~15 | ~20 | ~30 |
+| Bot API version | **9.6** | 7.x | 7.x | 7.x |
+| Tool annotations | **All 169** | None | None | None |
+| Rate limiting | **Global + per-chat** | None | None | None |
+| Circuit breaker | **3-state** | None | None | None |
+| Retry with backoff | **429 + 5xx** | None | None | Basic |
+| Token masking | **Yes** | No | No | No |
+| File upload security | **Path traversal protection** | No | No | No |
+| Meta-mode (2 tools) | **Yes** | No | No | No |
+| Zod validation | **Every param** | None | Partial | None |
+| Response truncation | **100K chars** | None | None | None |
 
 ## Quick Start
 
 ### Claude Code
 
 ```bash
-claude mcp add -e TELEGRAM_BOT_TOKEN=your_token telegram-api -- npx telegram-api-mcp
+claude mcp add telegram -- npx telegram-api-mcp -e TELEGRAM_BOT_TOKEN=your_token
+```
+
+With meta-mode (recommended for large conversations):
+
+```bash
+claude mcp add telegram -- npx telegram-api-mcp \
+  -e TELEGRAM_BOT_TOKEN=your_token \
+  -e TELEGRAM_META_MODE=true
 ```
 
 ### Claude Desktop
@@ -47,26 +57,42 @@ Add to `claude_desktop_config.json`:
 }
 ```
 
+### With default chat (skip chat_id in every call)
+
+```json
+{
+  "mcpServers": {
+    "telegram": {
+      "command": "npx",
+      "args": ["telegram-api-mcp"],
+      "env": {
+        "TELEGRAM_BOT_TOKEN": "your_token",
+        "TELEGRAM_DEFAULT_CHAT_ID": "-1001234567890"
+      }
+    }
+  }
+}
+```
+
 ### From source
 
 ```bash
 git clone https://github.com/timoncool/telegram-api-mcp.git
 cd telegram-api-mcp
-npm install
-npm run build
+npm install && npm run build
 TELEGRAM_BOT_TOKEN=your_token node dist/index.js
 ```
 
 ## Environment Variables
 
 | Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
+|----------|:---:|:---:|-------------|
 | `TELEGRAM_BOT_TOKEN` | **Yes** | — | Bot token from [@BotFather](https://t.me/BotFather) |
 | `TELEGRAM_DEFAULT_CHAT_ID` | No | — | Default chat ID for all tools |
 | `TELEGRAM_DEFAULT_THREAD_ID` | No | — | Default forum topic thread ID |
-| `TELEGRAM_META_MODE` | No | `false` | Use 2 meta-tools instead of 160 |
-| `TELEGRAM_GLOBAL_RATE_LIMIT` | No | `30` | Max requests per second |
-| `TELEGRAM_PER_CHAT_RATE_LIMIT` | No | `20` | Max messages per minute per chat |
+| `TELEGRAM_META_MODE` | No | `false` | Use 2 meta-tools instead of 169 |
+| `TELEGRAM_GLOBAL_RATE_LIMIT` | No | `30` | Max requests/sec ([Telegram limit](https://core.telegram.org/bots/faq#my-bot-is-hitting-limits)) |
+| `TELEGRAM_PER_CHAT_RATE_LIMIT` | No | `20` | Max messages/min per group ([Telegram limit](https://core.telegram.org/bots/faq#my-bot-is-hitting-limits)) |
 | `TELEGRAM_MAX_RETRIES` | No | `3` | Retry attempts on transient errors |
 | `TELEGRAM_CB_THRESHOLD` | No | `5` | Failures before circuit opens |
 | `TELEGRAM_CB_COOLDOWN` | No | `30000` | Circuit breaker cooldown (ms) |
@@ -75,42 +101,45 @@ TELEGRAM_BOT_TOKEN=your_token node dist/index.js
 
 ## Meta Mode
 
-When `TELEGRAM_META_MODE=true`, the server exposes only 2 tools instead of 160:
+When `TELEGRAM_META_MODE=true`, the server exposes only 2 tools instead of 169:
 
 - **`telegram_find`** — search methods by keyword or category
 - **`telegram_call`** — call any method by name with JSON params
 
-This saves ~99% of context tokens while keeping full API access. The AI discovers methods on-demand:
+This saves ~99% of context tokens while keeping full API access:
 
 ```
 User: "Post a poll in my channel"
 AI: → telegram_find(query: "poll")
-AI: → telegram_call(method: "sendPoll", params: { question: "...", options: [...] })
+AI: → telegram_call(method: "sendPoll", params: { chat_id: ..., question: "...", options: [...] })
 ```
 
 ## API Coverage
 
-| Category | Methods | Examples |
-|----------|---------|---------|
-| Messages | 9 | sendMessage, sendDice, sendChatAction, sendChecklist |
-| Media | 9 | sendPhoto, sendVideo, sendDocument, sendMediaGroup |
-| Polls | 1 | sendPoll (v9.6: revoting, shuffle, descriptions) |
-| Editing | 10 | editMessageText, deleteMessage, deleteMessages |
-| Forwarding | 4 | forwardMessage, copyMessage, copyMessages |
-| Chat | 16 | getChat, setChatTitle, setChatPermissions, pinChatMessage |
-| Members | 9 | banChatMember, promoteChatMember, setChatMemberTag |
-| Invite | 6 | createChatInviteLink, approveChatJoinRequest |
-| Forum | 13 | createForumTopic, editForumTopic, closeForumTopic |
-| Bot | 24 | getMe, setMyCommands, setMyProfilePhoto, getFile |
-| Stickers | 14 | sendSticker, createNewStickerSet, uploadStickerFile |
-| Payments | 7 | sendInvoice, getStarTransactions, refundStarPayment |
-| Business | 13 | readBusinessMessage, setBusinessAccountName, postStory |
+169/169 methods — **100% Bot API 9.6** (April 2026)
+
+| Category | Count | Key methods |
+|----------|:---:|-------------|
+| Bot | 21 | getMe, setMyCommands, setMyProfilePhoto, getFile, getUserProfilePhotos |
+| Stickers | 16 | sendSticker, createNewStickerSet, uploadStickerFile, setStickerKeywords |
+| Chat | 15 | getChat, setChatTitle, setChatPermissions, pinChatMessage, leaveChat |
+| Business | 14 | readBusinessMessage, setBusinessAccountName, getBusinessConnection |
+| Forum | 13 | createForumTopic, editForumTopic, closeForumTopic, deleteForumTopic |
+| Editing | 10 | editMessageText, editMessageMedia, deleteMessage, deleteMessages, stopPoll |
+| Messages | 9 | sendMessage, sendMessageDraft, sendLocation, sendContact, sendChecklist |
+| Media | 9 | sendPhoto, sendVideo, sendAudio, sendDocument, sendMediaGroup, sendPaidMedia |
+| Members | 9 | banChatMember, promoteChatMember, setChatMemberTag, restrictChatMember |
+| Invite | 8 | createChatInviteLink, createChatSubscriptionInviteLink, approveChatJoinRequest |
+| Payments | 8 | sendInvoice, createInvoiceLink, getStarTransactions, getMyStarBalance |
+| Gifts | 8 | sendGift, getUserGifts, getChatGifts, giftPremiumSubscription, upgradeGift |
+| Other | 5 | verifyUser, verifyChat, setUserEmojiStatus, savePreparedInlineMessage |
+| Forwarding | 4 | forwardMessage, forwardMessages, copyMessage, copyMessages |
 | Stories | 4 | postStory, editStory, deleteStory, repostStory |
-| Gifts | 8 | sendGift, getUserGifts, convertGiftToStars, upgradeGift |
+| Inline | 4 | answerInlineQuery, answerCallbackQuery, answerWebAppQuery, savePreparedInlineMessage |
+| Updates | 4 | getUpdates, setWebhook, deleteWebhook, getWebhookInfo |
 | Games | 3 | sendGame, setGameScore, getGameHighScores |
-| Inline | 2 | answerInlineQuery, answerCallbackQuery |
-| Managed Bots | 3 | getManagedBotToken, replaceManagedBotToken (v9.6) |
-| Updates | 4 | getUpdates, setWebhook, getWebhookInfo |
+| Managed Bots | 3 | getManagedBotToken, replaceManagedBotToken, savePreparedKeyboardButton |
+| Polls | 1 | sendPoll (v9.6: revoting, shuffle, multiple correct, descriptions) |
 | Passport | 1 | setPassportDataErrors |
 
 ## Architecture
@@ -127,7 +156,6 @@ src/
 └── methods/
     ├── index.ts          # Aggregator + search
     ├── messages.ts       # sendMessage, sendDice, sendChecklist, ...
-    ├── media.ts          # → in messages.ts (sendPhoto, sendVideo, ...)
     ├── forwarding.ts     # forwardMessage, copyMessage, ...
     ├── editing.ts        # editMessageText, deleteMessage, ...
     ├── chat.ts           # getChat, setChatTitle, banChatMember, ...
@@ -137,31 +165,44 @@ src/
     ├── payments.ts       # sendInvoice, getStarTransactions, ...
     ├── business.ts       # readBusinessMessage, setBusinessAccount*, ...
     ├── stories.ts        # postStory, editStory, deleteStory, ...
-    ├── gifts.ts          # sendGift, getUserGifts, convertGiftToStars, ...
+    ├��─ gifts.ts          # sendGift, getUserGifts, convertGiftToStars, ...
     ├── games.ts          # sendGame, setGameScore, ...
     ├── inline.ts         # answerInlineQuery, answerCallbackQuery
     ├── managed-bots.ts   # getManagedBotToken, replaceManagedBotToken
     ├── updates.ts        # getUpdates, setWebhook, ...
-    └── passport.ts       # setPassportDataErrors
+    ├── passport.ts       # setPassportDataErrors
+    └── other.ts          # verifyUser, setChatMenuButton, ...
 ```
 
-### Key design decisions
+### Design principles
 
-- **Declarative registry** — each method is data (name, params, types, validation), not a handler. One generic handler serves all 160 methods. Adding a new Bot API method = one array entry.
-- **Zod everywhere** — params validated before reaching Telegram. Clear error messages instead of opaque API 400s.
-- **Token bucket rate limiting** — mathematically correct, no race conditions in async context. Per-chat limiting prevents Telegram's 20msg/min/chat restriction.
-- **Circuit breaker** — 429 (rate limit) is NOT counted as failure. Only real errors (5xx, network) trip the breaker.
-- **No token leakage** — token masked in all error messages, never returned in tool responses. `getFile` returns `file_path`, not full URL with token.
-- **Path traversal protection** — file uploads restricted to `TELEGRAM_ALLOWED_UPLOAD_DIRS` when set.
+- **Declarative registry** — each method is pure data (name, params, types, annotations). One generic handler serves all 169 methods. Adding a new method = one array entry.
+- **Zod validation** — every parameter validated before reaching Telegram. Clear error messages with hints instead of opaque API 400s.
+- **Token bucket rate limiting** — no race conditions (async mutex). Defaults match [Telegram's official limits](https://core.telegram.org/bots/faq#my-bot-is-hitting-limits): 30 req/sec global, 20 msg/min per group.
+- **Circuit breaker** — 429 (rate limit) is NOT counted as failure. Only real errors (5xx, network) trip the breaker. Half-open probe recovers automatically.
+- **Tool annotations** — every method has MCP annotations (readOnlyHint, destructiveHint, idempotentHint, openWorldHint) so AI clients know which tools are safe to auto-approve.
+- **Response truncation** — responses capped at 100K chars to prevent context window overflow.
 
 ## Security
 
-- Bot token never appears in MCP tool responses or logs
-- File upload paths validated against allowed directories
-- Path traversal attacks blocked (resolve + normalize + startsWith check)
+- Bot token never appears in MCP tool responses or error messages (masked as `***`)
+- File upload paths validated against allowed directories (`TELEGRAM_ALLOWED_UPLOAD_DIRS`)
+- Path traversal attacks blocked (resolve + normalize + separator check)
 - No `eval()`, no `Function()`, no dynamic imports
 - No external requests except `api.telegram.org`
 - No telemetry, no analytics, no phone-home
+- Zero bloat: only 2 runtime dependencies (`@modelcontextprotocol/sdk` + `zod`)
+
+## Development
+
+```bash
+npm install
+npm run build         # TypeScript compilation
+npm run typecheck     # Type checking without emit
+npm test              # Run all tests (vitest)
+npm run test:watch    # Watch mode
+npm run lint          # ESLint
+```
 
 ## License
 

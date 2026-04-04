@@ -1,10 +1,24 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { allMethods, findMethodByToolName, findMethodByApiName, searchMethods } from "../src/methods/index.js";
 import { buildZodSchema } from "../src/method-registry.js";
 
 describe("Method Registry", () => {
-  it("has 160+ methods", () => {
-    expect(allMethods.length).toBeGreaterThanOrEqual(150);
+  it("has exactly 169 methods (Bot API 9.6)", () => {
+    expect(allMethods.length).toBe(169);
+  });
+
+  it("covers 100% of official Bot API methods", () => {
+    const listPath = resolve(__dirname, "../docs/official-method-list.txt");
+    const official = readFileSync(listPath, "utf-8").trim().split("\n").map((s) => s.trim()).filter(Boolean);
+    const ourSet = new Set(allMethods.map((m) => m.apiMethod));
+
+    const missing = official.filter((m) => !ourSet.has(m));
+    const extra = [...ourSet].filter((m) => !official.includes(m));
+
+    expect(missing, `Missing methods: ${missing.join(", ")}`).toEqual([]);
+    expect(extra, `Extra methods not in official API: ${extra.join(", ")}`).toEqual([]);
   });
 
   it("all methods have unique tool names", () => {

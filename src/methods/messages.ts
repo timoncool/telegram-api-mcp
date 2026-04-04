@@ -174,6 +174,7 @@ export const messageMethods: MethodDef[] = [
       { name: "chat_id", type: ChatId, required: true, description: "Target chat ID or @username" },
       { name: "star_count", type: PositiveInt, required: true, description: "Stars payment amount" },
       { name: "media", type: z.any(), required: true, description: "Array of InputPaidMedia" },
+      { name: "payload", type: z.string().max(128), required: false, description: "Bot-defined paid media payload (0-128 bytes, v7.10)" },
       { name: "show_caption_above_media", type: BooleanFlag, required: false, description: "Show caption above media" },
       ...commonMediaParams(),
       ...commonSendParams(),
@@ -266,6 +267,8 @@ export const messageMethods: MethodDef[] = [
     params: [
       { name: "chat_id", type: ChatId, required: true, description: "Target chat ID or @username" },
       { name: "question", type: z.string().min(1).max(300), required: true, description: "Poll question (1-300 chars)" },
+      { name: "question_parse_mode", type: ParseMode, required: false, description: "Question text formatting mode" },
+      { name: "question_entities", type: MessageEntities, required: false, description: "Special entities in question text" },
       { name: "options", type: z.any(), required: true, description: "Array of InputPollOption (2-12 items)" },
       { name: "is_anonymous", type: BooleanFlag, required: false, description: "Anonymous poll (default: true)" },
       { name: "type", type: z.enum(["regular", "quiz"]), required: false, description: "Poll type: regular or quiz" },

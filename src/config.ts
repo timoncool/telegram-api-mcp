@@ -8,9 +8,9 @@ export interface Config {
   defaultChatId?: string;
   /** Default message_thread_id for forum topics (optional) */
   defaultThreadId?: number;
-  /** Global rate limit: max requests per second (default: 30) */
+  /** Global rate limit: max requests per second (default: 30, Telegram FAQ limit) */
   globalRateLimit: number;
-  /** Per-chat rate limit: max messages per minute to same chat (default: 20) */
+  /** Per-chat rate limit: max messages per minute to same group (default: 20, Telegram FAQ limit) */
   perChatRateLimit: number;
   /** Max retry attempts on transient errors (default: 3) */
   maxRetries: number;

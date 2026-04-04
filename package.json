@@ -1,7 +1,7 @@
 {
   "name": "telegram-api-mcp",
   "version": "0.1.0",
-  "description": "Ultimate Telegram Bot API MCP Server — full v9.6 coverage, meta-mode, rate limiting, circuit breaker",
+  "description": "Ultimate Telegram Bot API v9.6 MCP Server — 169 methods, meta-mode, rate limiting, circuit breaker",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -32,7 +32,9 @@
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "server.json",
+    "smithery.yaml"
   ],
   "repository": {
     "type": "git",

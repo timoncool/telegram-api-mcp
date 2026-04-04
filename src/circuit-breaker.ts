@@ -57,6 +57,12 @@ export class CircuitBreaker {
     this.failureCount++;
     this.lastFailureTime = Date.now();
 
+    // In half_open, any failure immediately reopens
+    if (this.state === "half_open") {
+      this.state = "open";
+      return true;
+    }
+
     if (this.failureCount >= this.threshold) {
       this.state = "open";
       return true;

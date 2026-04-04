@@ -54,4 +54,23 @@ describe("CircuitBreaker", () => {
     cb.recordSuccess();
     expect(cb.getState()).toBe("closed");
   });
+
+  it("reopens from half-open on failure", async () => {
+    const cb = new CircuitBreaker(3, 50);
+    // Open the circuit
+    cb.recordFailure(500);
+    cb.recordFailure(500);
+    cb.recordFailure(500);
+    expect(cb.getState()).toBe("open");
+
+    // Wait for cooldown → half-open
+    await new Promise((r) => setTimeout(r, 60));
+    cb.check();
+    expect(cb.getState()).toBe("half_open");
+
+    // Failure in half-open → immediately back to open
+    const opened = cb.recordFailure(500);
+    expect(opened).toBe(true);
+    expect(cb.getState()).toBe("open");
+  });
 });
