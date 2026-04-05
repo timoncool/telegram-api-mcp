@@ -1,15 +1,20 @@
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 import { Config } from "./config.js";
 import { TelegramClient, TelegramApiError } from "./telegram-client.js";
 import { MethodDef, buildZodSchema } from "./method-registry.js";
 import { allMethods, searchMethods, findMethodByApiName } from "./methods/index.js";
 import { CircuitOpenError } from "./circuit-breaker.js";
-import { logPost, getPostHistory } from "./post-log.js";
+import { Trail } from "./trail.js";
 
 /** Pre-built Zod schemas for all methods (built once, reused on every call). */
 const schemaCache = new Map<string, ReturnType<typeof buildZodSchema>>();
+
+/** Module-level TRAIL instance for auto-logging in callTelegram. */
+let trailInstance: Trail | null = null;
 
 function getSchema(method: MethodDef): ReturnType<typeof buildZodSchema> {
   let schema = schemaCache.get(method.apiMethod);
@@ -37,7 +42,7 @@ export async function startServer(config: Config): Promise<void> {
     registerAllTools(server, client);
   }
 
-  registerPostHistoryTool(server);
+  trailInstance = registerTrailTools(server);
   registerDownloadTool(server, client);
 
   const shutdown = () => {
@@ -137,28 +142,99 @@ function registerMetaTools(server: McpServer, client: TelegramClient): void {
   );
 }
 
-// ─── Post History ───────────────────────────────────────────────────────
+// ─── TRAIL ─────────────────────────────────────────────────────────────
 
-function registerPostHistoryTool(server: McpServer): void {
+function registerTrailTools(server: McpServer): Trail {
+  const dataDir = join(dirname(fileURLToPath(import.meta.url)), "..", "data");
+  const trail = new Trail(dataDir, "telegram-mcp");
+
   server.tool(
-    "get_post_history",
-    "Get history of messages sent by this bot. Use to check what was already posted to a chat before posting again. Returns newest first.",
+    "get_trail",
+    "Query the TRAIL content log. Check what content was posted, failed, or skipped across pipelines.",
     {
-      chat_id: z.union([z.number().int(), z.string()]).optional().describe("Filter by chat ID. Omit to see all chats."),
-      limit: z.number().int().min(1).max(200).optional().describe("Max entries to return (default: 50)"),
+      content_id: z.string().optional().describe("Filter by content ID (exact or prefix like 'civitai:image:')"),
+      action: z.union([z.string(), z.array(z.string())]).optional().describe("Filter by action (posted, failed, skipped, etc.)"),
+      requester: z.string().optional().describe("Filter by workflow/task ID"),
+      trace_id: z.string().optional().describe("Filter by pipeline trace ID"),
+      since: z.string().optional().describe("ISO 8601 timestamp — only entries after this time"),
+      limit: z.number().int().min(0).max(500).optional().describe("Max entries, newest first (default: 50, 0 = all)"),
+      offset: z.number().int().min(0).optional().describe("Entries to skip for pagination (default: 0)"),
     },
     { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     async (params) => {
-      const entries = await getPostHistory(params.chat_id, params.limit ?? 50);
+      const { entries, total } = await trail.query({
+        content_id: params.content_id,
+        action: params.action,
+        requester: params.requester,
+        trace_id: params.trace_id,
+        since: params.since,
+        limit: params.limit ?? 50,
+        offset: params.offset,
+      });
       if (entries.length === 0) {
-        return { content: [{ type: "text" as const, text: "No posts found for this chat." }] };
+        return { content: [{ type: "text" as const, text: "No trail entries found." }] };
       }
-      const text = entries.map((e) =>
-        `[${e.timestamp}] ${e.method} → chat ${e.chat_id} (msg ${e.message_id ?? "?"})${e.caption_preview ? `: ${e.caption_preview}` : ""}`
-      ).join("\n");
-      return { content: [{ type: "text" as const, text: `${entries.length} post(s):\n\n${text}` }] };
+      const lines = entries.map((e) => {
+        const d = e.details ?? {};
+        const detailParts = Object.entries(d)
+          .filter(([, v]) => typeof v !== "object")
+          .map(([k, v]) => `${k}=${v}`);
+        const detailStr = detailParts.length ? ` — ${detailParts.join(", ")}` : "";
+        return `[${e.timestamp}] ${e.action} ${e.content_id} (req: ${e.requester})${detailStr}`;
+      });
+      return { content: [{ type: "text" as const, text: `TRAIL Log (${entries.length}/${total}):\n\n${lines.join("\n")}` }] };
     }
   );
+
+  server.tool(
+    "mark_trail",
+    "Write an entry to the TRAIL content log. Use to explicitly record content actions.",
+    {
+      content_id: z.string().describe("Content ID in format source:type:id"),
+      action: z.string().describe("Action: fetched, selected, posted, failed, skipped"),
+      requester: z.string().describe("Workflow/task ID"),
+      details: z.record(z.unknown()).optional().describe("Platform-specific data"),
+      trace_id: z.string().optional().describe("Pipeline trace ID"),
+      tags: z.array(z.string()).optional().describe("Labels for filtering"),
+    },
+    { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
+    async (params) => {
+      await trail.append(params.content_id, params.action, params.requester, {
+        details: params.details,
+        trace_id: params.trace_id,
+        tags: params.tags,
+      });
+      return { content: [{ type: "text" as const, text: `Trail entry recorded: ${params.action} ${params.content_id} (req: ${params.requester})` }] };
+    }
+  );
+
+  server.tool(
+    "get_trail_stats",
+    "Get summary statistics from the TRAIL content log.",
+    {
+      requester: z.string().optional().describe("Filter by workflow/task ID"),
+      since: z.string().optional().describe("ISO 8601 timestamp — only count entries after this"),
+    },
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    async (params) => {
+      const stats = await trail.stats(params.requester, params.since);
+      const actionLines = Object.entries(stats.by_action)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([act, count]) => `  ${act}: ${count}`)
+        .join("\n");
+      const text = [
+        `TRAIL Statistics:`,
+        `Total entries: ${stats.total_entries}`,
+        `Unique content IDs: ${stats.unique_content_ids}`,
+        `First entry: ${stats.first_entry ?? "N/A"}`,
+        `Last entry: ${stats.last_entry ?? "N/A"}`,
+        `By action:\n${actionLines}`,
+      ].join("\n");
+      return { content: [{ type: "text" as const, text }] };
+    }
+  );
+
+  return trail;
 }
 
 // ─── Download ───────────────────────────────────────────────────────────
@@ -240,18 +316,22 @@ async function callTelegram(
     // Auto-log send/forward/copy/post calls
     if (LOGGED_METHODS.has(method.apiMethod) && result != null) {
       const r = (Array.isArray(result) ? result[0] : result) as Record<string, unknown> | undefined;
-      const preview = truncateForLog(
-        (params.caption as string) ?? (params.text as string) ?? ""
-      );
-      logPost({
-        timestamp: new Date().toISOString(),
-        method: method.apiMethod,
-        chat_id: (params.chat_id as string | number) ?? "",
-        message_id: (r?.message_id as number) ?? undefined,
-        caption_preview: preview || undefined,
-      }).catch((err) => {
-        log("warn", `post-log write failed: ${(err as Error).message}`);
-      });
+      // TRAIL auto-logging
+      const _trail = params._trail as Record<string, unknown> | undefined;
+      const trailCid = (_trail?.content_id ?? params.content_id) as string | undefined;
+      const trailReq = (_trail?.requester ?? params.requester) as string | undefined;
+      if (trailCid && trailReq && trailInstance) {
+        trailInstance.append(trailCid, "posted", trailReq, {
+          details: {
+            platform: "telegram",
+            platform_id: String(r?.message_id ?? ""),
+            chat_id: String(params.chat_id ?? ""),
+          },
+          trace_id: (_trail?.trace_id ?? params.trace_id) as string | undefined,
+        }).catch((err) => {
+          log("warn", `trail write failed: ${(err as Error).message}`);
+        });
+      }
     }
 
     const text = formatResult(method.apiMethod, result);
@@ -288,10 +368,6 @@ function formatResult(method: string, result: unknown): string {
   }
 
   return text;
-}
-
-function truncateForLog(s: string): string {
-  return s.length > 100 ? s.slice(0, 100) + "..." : s;
 }
 
 function log(level: "info" | "warn" | "error", msg: string): void {
