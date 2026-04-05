@@ -4,6 +4,7 @@
 [![Methods](https://img.shields.io/badge/methods-169%2F169-brightgreen)](#api-coverage)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](#)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![TRAIL](https://img.shields.io/badge/TRAIL-v2.1-6366f1.svg)](https://github.com/timoncool/trail-spec)
 
 **Ultimate MCP server for Telegram Bot API** — 169 methods with full Bot API 9.6 coverage, meta-mode, rate limiting, circuit breaker, Zod validation.
 
