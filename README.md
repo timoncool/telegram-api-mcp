@@ -1,12 +1,18 @@
+<div align="center">
+
 # telegram-api-mcp
 
-[![Bot API](https://img.shields.io/badge/Telegram%20Bot%20API-9.6-26A5E4?logo=telegram)](https://core.telegram.org/bots/api)
-[![Methods](https://img.shields.io/badge/methods-169%2F169-brightgreen)](#api-coverage)
-[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](#)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![TRAIL](https://img.shields.io/badge/TRAIL-v2.1-6366f1.svg)](https://github.com/timoncool/trail-spec)
+**Ultimate MCP server for Telegram Bot API — 169 methods, full v9.6 coverage, meta-mode, rate limiting, circuit breaker.**
 
-**Ultimate MCP server for Telegram Bot API** — 169 methods with full Bot API 9.6 coverage, meta-mode, rate limiting, circuit breaker, Zod validation.
+[![Stars](https://img.shields.io/github/stars/timoncool/telegram-api-mcp?style=flat-square)](https://github.com/timoncool/telegram-api-mcp/stargazers)
+[![npm](https://img.shields.io/npm/v/telegram-api-mcp?style=flat-square)](https://www.npmjs.com/package/telegram-api-mcp)
+[![License](https://img.shields.io/github/license/timoncool/telegram-api-mcp?style=flat-square)](LICENSE)
+[![Bot API](https://img.shields.io/badge/Telegram%20Bot%20API-9.6-26A5E4?style=flat-square&logo=telegram)](https://core.telegram.org/bots/api)
+[![TRAIL](https://img.shields.io/badge/TRAIL-v2.1-6366f1?style=flat-square)](https://github.com/timoncool/trail-spec)
+
+</div>
+
+169/169 Bot API methods with Zod validation, token masking, tool annotations, and zero bloat (2 dependencies).
 
 ## Features
 
@@ -204,11 +210,16 @@ npm run test:watch    # Watch mode
 npm run lint          # ESLint
 ```
 
-## Other MCP Servers
+## Other Projects by [@timoncool](https://github.com/timoncool)
 
-| Server | Description |
-|--------|-------------|
-| [civitai-mcp-ultimate](https://github.com/timoncool/civitai-mcp-ultimate) | Civitai API — search models, browse images with prompts, download LoRAs/Checkpoints |
+| Project | Description |
+|---------|-------------|
+| [civitai-mcp-ultimate](https://github.com/timoncool/civitai-mcp-ultimate) | Civitai API as MCP server |
+| [trail-spec](https://github.com/timoncool/trail-spec) | TRAIL — cross-MCP content tracking protocol |
+| [ACE-Step Studio](https://github.com/timoncool/ACE-Step-Studio) | AI music studio — songs, vocals, covers, videos |
+| [VideoSOS](https://github.com/timoncool/videosos) | AI video production in the browser |
+| [tg-challenge-bot](https://github.com/timoncool/tg-challenge-bot) | AI anti-spam bot for Telegram |
+| [Bulka](https://github.com/timoncool/Bulka) | Live-coding music platform |
 
 ## Support the Author
 
@@ -225,9 +236,9 @@ I build open-source software and do AI research. Most of what I create is free a
 
 <a href="https://www.star-history.com/?repos=timoncool%2Ftelegram-api-mcp&type=date&legend=top-left">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=timoncool/telegram-api-mcp&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=timoncool/telegram-api-mcp&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=timoncool/telegram-api-mcp&type=date&legend=top-left" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=timoncool/telegram-api-mcp&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=timoncool/telegram-api-mcp&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=timoncool/telegram-api-mcp&type=date&legend=top-left" />
  </picture>
 </a>
 
