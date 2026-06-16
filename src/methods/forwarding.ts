@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MethodDef, ChatId, BooleanFlag ,  ANNOTATIONS } from "../method-registry.js";
+import { MethodDef, ChatId, Caption, BooleanFlag ,  ANNOTATIONS } from "../method-registry.js";
 
 export const forwardingMethods: MethodDef[] = [
   {
@@ -52,7 +52,7 @@ export const forwardingMethods: MethodDef[] = [
       { name: "from_chat_id", type: ChatId, required: true, description: "Source chat ID" },
       { name: "message_id", type: z.number().int(), required: true, description: "Message ID to copy" },
       { name: "message_thread_id", type: z.number().int(), required: false, description: "Forum topic thread ID" },
-      { name: "caption", type: z.string().max(1024), required: false, description: "New caption" },
+      { name: "caption", type: Caption, required: false, description: "New caption (0-1024 visible chars)" },
       { name: "parse_mode", type: z.enum(["HTML", "Markdown", "MarkdownV2"]), required: false, description: "Caption formatting" },
       { name: "caption_entities", type: z.any(), required: false, description: "Caption entities" },
       { name: "show_caption_above_media", type: BooleanFlag, required: false, description: "Show caption above media" },

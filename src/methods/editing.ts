@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MethodDef, ChatId, Text, ParseMode, MessageEntities, LinkPreviewOptions, commonEditParams, BooleanFlag ,  ANNOTATIONS } from "../method-registry.js";
+import { MethodDef, ChatId, Text, Caption, ParseMode, MessageEntities, LinkPreviewOptions, commonEditParams, BooleanFlag ,  ANNOTATIONS } from "../method-registry.js";
 
 export const editingMethods: MethodDef[] = [
   {
@@ -30,7 +30,7 @@ export const editingMethods: MethodDef[] = [
     returns: "Message or true",
     params: [
       ...commonEditParams(),
-      { name: "caption", type: z.string().max(1024), required: false, description: "New caption (0-1024 chars)" },
+      { name: "caption", type: Caption, required: false, description: "New caption (0-1024 visible chars)" },
       { name: "parse_mode", type: ParseMode, required: false, description: "Caption formatting mode" },
       { name: "caption_entities", type: MessageEntities, required: false, description: "Caption entities" },
       { name: "show_caption_above_media", type: BooleanFlag, required: false, description: "Show caption above media" },

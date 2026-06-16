@@ -90,7 +90,25 @@ export const ChatId = z.union([z.number().int(), z.string()]).describe("Chat ID 
 export const MessageId = z.number().int().describe("Message ID");
 export const UserId = z.number().int().describe("User ID");
 export const Text = z.string().min(1).max(4096).describe("Message text (1-4096 chars)");
-export const Caption = z.string().max(1024).describe("Caption (0-1024 chars)");
+
+// Telegram counts the *visible* caption length (the text after HTML/Markdown is
+// parsed into entities), not the raw markup. HTML tags and the URLs inside
+// <a href="..."> add no visible characters, so capping the raw string at 1024
+// wrongly rejects rich captions. Strip tags and collapse entities, then count
+// UTF-16 code units the way Telegram does.
+export function visibleCaptionLength(s: string): number {
+  const stripped = s
+    .replace(/<[^>]+>/g, "")                       // HTML tags render to nothing
+    .replace(/&(?:amp|lt|gt|quot|#3[49]);/g, "x"); // each entity is 1 visible char
+  return stripped.length;
+}
+export const CAPTION_MAX = 1024;
+export const Caption = z
+  .string()
+  .refine((s) => visibleCaptionLength(s) <= CAPTION_MAX, {
+    message: `Caption exceeds ${CAPTION_MAX} visible characters (HTML tags and href URLs don't count)`,
+  })
+  .describe("Caption (0-1024 visible chars; HTML tags/URLs excluded)");
 export const ParseMode = z.enum(["HTML", "Markdown", "MarkdownV2"]).describe("Formatting mode");
 export const FileInput = z.string().describe("File ID, HTTP URL, or absolute file path");
 export const ReplyMarkup = z.any().describe("InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove, or ForceReply");
