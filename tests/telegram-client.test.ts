@@ -221,20 +221,20 @@ describe("TelegramClient", () => {
 
     await client.call("sendMediaGroup", {
       chat_id: 1,
-      media: JSON.stringify([{ type: "photo", media: "https://example.com/a.jpg" }]),
+      media: JSON.stringify([{ type: "photo", media: "AgACAgIAAxkBAAI-file-id" }]),
     });
 
     const body = JSON.parse(mockFetch.mock.calls[0][1].body);
     expect(Array.isArray(body.media)).toBe(true);
-    expect(body.media[0].media).toBe("https://example.com/a.jpg");
+    expect(body.media[0].media).toBe("AgACAgIAAxkBAAI-file-id");
 
     vi.unstubAllGlobals();
   });
 
-  it("re-uploads a URL that Telegram could not fetch itself", async () => {
-    // Telegram caps URL fetching at 20 MB (5 MB for photos); multipart goes to 50 MB.
+  it("uploads media URLs as multipart instead of letting Telegram fetch them", async () => {
+    // Telegram's own URL fetching caps at 5 MB for photos and 20 MB for other files.
     const videoBytes = Buffer.alloc(64, 7);
-    const mockFetch = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+    const mockFetch = vi.fn().mockImplementation((url: string) => {
       if (String(url).startsWith("https://cdn.example.com/")) {
         return Promise.resolve({
           ok: true,
@@ -242,14 +242,7 @@ describe("TelegramClient", () => {
           arrayBuffer: () => Promise.resolve(videoBytes.buffer.slice(0)),
         });
       }
-      const isUpload = init?.body instanceof FormData;
-      return Promise.resolve({
-        json: () => Promise.resolve(
-          isUpload
-            ? { ok: true, result: { message_id: 7 } }
-            : { ok: false, error_code: 400, description: "Bad Request: failed to get HTTP URL content" }
-        ),
-      });
+      return Promise.resolve({ json: () => Promise.resolve({ ok: true, result: { message_id: 7 } }) });
     });
     vi.stubGlobal("fetch", mockFetch);
 
@@ -259,32 +252,62 @@ describe("TelegramClient", () => {
     });
 
     expect(result).toEqual({ message_id: 7 });
-    const uploadCall = mockFetch.mock.calls.find((c) => c[1]?.body instanceof FormData)!;
-    expect((uploadCall[1].body as FormData).get("video")).toBeInstanceOf(Blob);
+    const apiCall = mockFetch.mock.calls.find((c) => String(c[0]).includes("api.telegram.org"))!;
+    expect(apiCall[1].body).toBeInstanceOf(FormData);
+    expect((apiCall[1].body as FormData).get("video")).toBeInstanceOf(Blob);
 
     vi.unstubAllGlobals();
   });
 
-  it("does not re-upload when the failure is unrelated to the URL", async () => {
-    let apiCalls = 0;
-    const mockFetch = vi.fn().mockImplementation(() => {
-      apiCalls++;
-      return Promise.resolve({
-        json: () => Promise.resolve({ ok: false, error_code: 400, description: "Bad Request: chat not found" }),
-      });
+  it("uploads every URL inside a media group", async () => {
+    const mockFetch = vi.fn().mockImplementation((url: string) => {
+      if (String(url).startsWith("https://cdn.example.com/")) {
+        return Promise.resolve({
+          ok: true,
+          headers: new Headers({ "content-type": "image/jpeg" }),
+          arrayBuffer: () => Promise.resolve(Buffer.alloc(8).buffer.slice(0)),
+        });
+      }
+      return Promise.resolve({ json: () => Promise.resolve({ ok: true, result: [] }) });
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    await client.call("sendMediaGroup", {
+      chat_id: 1,
+      media: [
+        { type: "photo", media: "https://cdn.example.com/a.jpg" },
+        { type: "photo", media: "https://cdn.example.com/b.jpg" },
+      ],
+    });
+
+    const apiCall = mockFetch.mock.calls.find((c) => String(c[0]).includes("api.telegram.org"))!;
+    const form = apiCall[1].body as FormData;
+    const media = JSON.parse(form.get("media") as string);
+    expect(media.map((m: { media: string }) => m.media)).toEqual(["attach://file0", "attach://file1"]);
+
+    vi.unstubAllGlobals();
+  });
+
+  it("reports an unreachable link instead of hiding it", async () => {
+    const mockFetch = vi.fn().mockImplementation((url: string) => {
+      if (String(url).startsWith("https://cdn.example.com/")) {
+        return Promise.resolve({ ok: false, status: 403, headers: new Headers() });
+      }
+      return Promise.resolve({ json: () => Promise.resolve({ ok: true, result: {} }) });
     });
     vi.stubGlobal("fetch", mockFetch);
 
     await expect(client.call("sendVideo", { chat_id: 1, video: "https://cdn.example.com/clip.mp4" }))
-      .rejects.toThrow(/chat not found/);
-    expect(apiCalls).toBe(1);
+      .rejects.toThrow(/HTTP 403/);
+    // Nothing was sent to Telegram — the failure is surfaced, not papered over.
+    expect(mockFetch.mock.calls.some((c) => String(c[0]).includes("api.telegram.org"))).toBe(false);
 
     vi.unstubAllGlobals();
   });
 
-  it("refuses to mirror a file larger than the upload limit", async () => {
+  it("reports a file over the upload limit with its real size", async () => {
     const small = new TelegramClient(makeConfig({ maxFileSize: 32 }));
-    const mockFetch = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+    const mockFetch = vi.fn().mockImplementation((url: string) => {
       if (String(url).startsWith("https://cdn.example.com/")) {
         return Promise.resolve({
           ok: true,
@@ -292,15 +315,12 @@ describe("TelegramClient", () => {
           arrayBuffer: () => Promise.resolve(Buffer.alloc(1024).buffer.slice(0)),
         });
       }
-      void init;
-      return Promise.resolve({
-        json: () => Promise.resolve({ ok: false, error_code: 400, description: "Bad Request: file is too big" }),
-      });
+      return Promise.resolve({ json: () => Promise.resolve({ ok: true, result: {} }) });
     });
     vi.stubGlobal("fetch", mockFetch);
 
     await expect(small.call("sendVideo", { chat_id: 1, video: "https://cdn.example.com/big.mp4" }))
-      .rejects.toThrow(/upload limit/);
+      .rejects.toThrow(/Telegram accepts at most/);
 
     vi.unstubAllGlobals();
     small.destroy();

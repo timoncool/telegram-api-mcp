@@ -14,28 +14,6 @@ const FILE_FIELDS = [
   "video_note", "sticker", "thumbnail", "certificate", "cover", "live_photo",
 ] as const;
 
-/**
- * Telegram fetches HTTP URLs itself, but only up to 5 MB for photos and 20 MB for
- * everything else, and only when the MIME type matches the method. Uploading the same
- * file as multipart raises those ceilings to 10 MB / 50 MB. These are the errors that
- * mean "I could not fetch your URL" — worth one retry with the bytes attached.
- */
-const URL_FETCH_FAILURES = [
-  "failed to get http url content",
-  "wrong file identifier/http url specified",
-  "wrong remote file identifier specified",
-  "file is too big",
-  "webpage_curl_failed",
-  "wrong type of the web page content",
-  "wrong padding in the string",
-  "image_process_failed",
-];
-
-function isUrlFetchFailure(error: unknown): boolean {
-  const message = error instanceof Error ? error.message.toLowerCase() : "";
-  return URL_FETCH_FAILURES.some((needle) => message.includes(needle));
-}
-
 function isHttpUrl(value: unknown): value is string {
   return typeof value === "string" && /^https?:\/\//i.test(value);
 }
@@ -143,16 +121,13 @@ export class TelegramClient {
     this.circuitBreaker.check();
     await this.rateLimiter.acquire(chatId);
 
-    const hasFiles = this.hasFileParams(resolvedParams);
-
-    try {
-      return await this.callWithRetry(method, resolvedParams, hasFiles);
-    } catch (error) {
-      if (!isUrlFetchFailure(error) || this.collectRemoteUrls(resolvedParams).length === 0) {
-        throw error;
-      }
-      // Telegram could not fetch the URL itself — mirror it locally and upload the bytes.
-      log("warn", `${method}: Telegram could not fetch the URL, retrying as an upload`);
+    // Media given as an http(s) URL is always fetched here and uploaded as multipart.
+    // Letting Telegram fetch the URL itself caps it at 5 MB for photos and 20 MB for
+    // everything else and requires a MIME type it agrees with (sendDocument by URL only
+    // accepts PDF and ZIP), so videos and large images failed. Uploading the bytes lifts
+    // that to 10 MB / 50 MB and behaves the same for every link — one path, no retry
+    // dance, and a precise error when a link genuinely cannot be used.
+    if (this.collectRemoteUrls(resolvedParams).length > 0) {
       const mirrored = await this.mirrorRemoteFiles(resolvedParams);
       try {
         return await this.callWithRetry(method, mirrored.params, true);
@@ -160,6 +135,8 @@ export class TelegramClient {
         await Promise.all(mirrored.tempFiles.map((f) => unlink(f).catch(() => undefined)));
       }
     }
+
+    return this.callWithRetry(method, resolvedParams, this.hasFileParams(resolvedParams));
   }
 
   /** Every http(s) URL sitting in a file field, including inside InputMedia. */
@@ -201,14 +178,26 @@ export class TelegramClient {
 
     const tempFiles: string[] = [];
     for (const [index, target] of targets.entries()) {
-      const response = await fetch(target.url, { redirect: "follow" });
+      let response: Response;
+      try {
+        response = await fetch(target.url, { redirect: "follow" });
+      } catch (error) {
+        throw new TelegramApiError(
+          `Could not download ${target.url}: ${(error as Error).message}. The link must be directly reachable from this machine.`,
+          0
+        );
+      }
       if (!response.ok) {
-        throw new TelegramApiError(`Could not download ${target.url} (HTTP ${response.status})`, response.status);
+        throw new TelegramApiError(
+          `Could not download ${target.url} — HTTP ${response.status}. The link must point straight at the file, with no login or hotlink protection.`,
+          response.status
+        );
       }
       const bytes = Buffer.from(await response.arrayBuffer());
       if (bytes.byteLength > this.config.maxFileSize) {
         throw new TelegramApiError(
-          `${target.url} is ${Math.round(bytes.byteLength / 1048576)} MB — over the ${Math.round(this.config.maxFileSize / 1048576)} MB upload limit`,
+          `${target.url} is ${(bytes.byteLength / 1048576).toFixed(1)} MB — Telegram accepts at most ` +
+            `${Math.round(this.config.maxFileSize / 1048576)} MB per upload. Send a smaller file or a shorter clip.`,
           413
         );
       }
