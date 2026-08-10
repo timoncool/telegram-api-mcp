@@ -208,9 +208,7 @@ export const botMethods: MethodDef[] = [
     needsChatId: false,
     canUploadFiles: false,
     returns: "true",
-    params: [
-      { name: "photo_id", type: z.string(), required: false, description: "Photo ID to remove" },
-    ],
+    params: [],
   },
   {
     apiMethod: "getUserProfilePhotos",

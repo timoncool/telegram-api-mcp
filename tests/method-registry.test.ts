@@ -2,16 +2,19 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { allMethods, findMethodByToolName, findMethodByApiName, searchMethods } from "../src/methods/index.js";
-import { buildZodSchema } from "../src/method-registry.js";
+import { buildZodSchema, buildJsonSchema, RICH_MESSAGE_LIMITS } from "../src/method-registry.js";
+
+/** Source of truth is the docs mirror, not a hardcoded number that rots on every release. */
+const officialMethods = readFileSync(resolve(__dirname, "../docs/official-method-list.txt"), "utf-8")
+  .trim().split("\n").map((s) => s.trim()).filter(Boolean);
 
 describe("Method Registry", () => {
-  it("has exactly 169 methods (Bot API 9.6)", () => {
-    expect(allMethods.length).toBe(169);
+  it("implements every method in the docs mirror", () => {
+    expect(allMethods.length).toBe(officialMethods.length);
   });
 
   it("covers 100% of official Bot API methods", () => {
-    const listPath = resolve(__dirname, "../docs/official-method-list.txt");
-    const official = readFileSync(listPath, "utf-8").trim().split("\n").map((s) => s.trim()).filter(Boolean);
+    const official = officialMethods;
     const ourSet = new Set(allMethods.map((m) => m.apiMethod));
 
     const missing = official.filter((m) => !ourSet.has(m));
@@ -147,8 +150,78 @@ describe("Method Registry", () => {
     }
   });
 
-  it("covers all major Bot API 9.6 methods", () => {
+  it("validates rich messages against the documented limits", () => {
+    const method = findMethodByApiName("sendRichMessage")!;
+    expect(method).toBeDefined();
+    const schema = buildZodSchema(method.params);
+
+    const markdown = schema.safeParse({
+      chat_id: 123,
+      rich_message: { markdown: "# Title\n\n| a | b |\n|---|---|\n| 1 | 2 |" },
+    });
+    expect(markdown.success).toBe(true);
+
+    // Exactly one of blocks/html/markdown
+    expect(schema.safeParse({ chat_id: 123, rich_message: { markdown: "x", html: "<p>x</p>" } }).success).toBe(false);
+    expect(schema.safeParse({ chat_id: 123, rich_message: {} }).success).toBe(false);
+
+    // A rich message carries far more than a 1024-char caption
+    const long = schema.safeParse({ chat_id: 123, rich_message: { markdown: "x".repeat(20000) } });
+    expect(long.success).toBe(true);
+
+    const tooLong = schema.safeParse({
+      chat_id: 123,
+      rich_message: { markdown: "x".repeat(RICH_MESSAGE_LIMITS.text + 1) },
+    });
+    expect(tooLong.success).toBe(false);
+
+    const tooManyMedia = schema.safeParse({
+      chat_id: 123,
+      rich_message: { markdown: "x", media: Array.from({ length: RICH_MESSAGE_LIMITS.media + 1 }, () => ({ type: "photo" })) },
+    });
+    expect(tooManyMedia.success).toBe(false);
+  });
+
+  it("counts nested rich blocks towards the block limit", () => {
+    const schema = buildZodSchema(findMethodByApiName("sendRichMessage")!.params);
+    const nested = Array.from({ length: 2 }, () => ({
+      type: "list",
+      items: Array.from({ length: 200 }, () => ({ type: "paragraph", text: "item" })),
+    }));
+    // 2 outer + 400 nested = 402, under the limit
+    expect(schema.safeParse({ chat_id: 123, rich_message: { blocks: nested } }).success).toBe(true);
+
+    const overflowing = Array.from({ length: 3 }, () => ({
+      type: "list",
+      items: Array.from({ length: 200 }, () => ({ type: "paragraph", text: "item" })),
+    }));
+    expect(schema.safeParse({ chat_id: 123, rich_message: { blocks: overflowing } }).success).toBe(false);
+  });
+
+  it("advertises object params as objects, not strings", () => {
+    // .superRefine() wraps a schema in ZodEffects; unwrapped, rich_message would be
+    // published to MCP clients as `type: "string"` and agents would send a string.
+    const schema = buildJsonSchema(findMethodByApiName("sendRichMessage")!.params);
+    const richMessage = schema.properties as Record<string, Record<string, unknown>>;
+    expect(richMessage.rich_message.type).toBe("object");
+    expect(Object.keys(richMessage.rich_message.properties as object)).toContain("markdown");
+  });
+
+  it("uses message_effect_id, not the effect_id that Telegram rejects", () => {
+    for (const name of ["sendMessage", "sendPhoto", "sendVideo", "sendGame"]) {
+      const params = findMethodByApiName(name)!.params.map((p) => p.name);
+      expect(params, `${name} should expose message_effect_id`).toContain("message_effect_id");
+      expect(params, `${name} should not expose effect_id`).not.toContain("effect_id");
+    }
+  });
+
+  it("covers all major Bot API 10.2 methods", () => {
     const criticalMethods = [
+      "sendRichMessage", "sendRichMessageDraft", "sendLivePhoto",
+      "editEphemeralMessageText", "deleteEphemeralMessage",
+      "deleteMessageReaction", "deleteAllMessageReactions",
+      "answerGuestQuery", "answerChatJoinRequestQuery", "sendChatJoinRequestWebApp",
+      "getManagedBotAccessSettings", "setManagedBotAccessSettings", "getUserPersonalChatMessages",
       "sendMessage", "sendPhoto", "sendVideo", "sendPoll", "sendMediaGroup",
       "editMessageText", "deleteMessage", "forwardMessage", "copyMessage",
       "banChatMember", "promoteChatMember", "setChatMemberTag",

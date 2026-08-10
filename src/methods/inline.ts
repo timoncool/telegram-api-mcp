@@ -29,4 +29,14 @@ export const inlineMethods: MethodDef[] = [
       { name: "cache_time", type: z.number().int(), required: false, description: "Cache time in seconds" },
     ],
   },
+  {
+    annotations: ANNOTATIONS.send,
+    apiMethod: "answerGuestQuery", toolName: "answer_guest_query",
+    description: "Reply to a received guest message (v10.0). Guest mode lets users message the bot without starting a chat.", category: "inline",
+    needsChatId: false, canUploadFiles: false, returns: "SentGuestMessage",
+    params: [
+      { name: "guest_query_id", type: z.string(), required: true, description: "Guest query ID" },
+      { name: "result", type: z.any(), required: true, description: "InlineQueryResult to send as the answer" },
+    ],
+  },
 ];

@@ -1,7 +1,6 @@
 import { z } from "zod";
 import {
   MethodDef, ChatId, UserId, Text, ParseMode, MessageEntities, BooleanFlag,
-  commonSendParams,
   ANNOTATIONS,
 } from "../method-registry.js";
 
@@ -11,17 +10,18 @@ export const otherMethods: MethodDef[] = [
     apiMethod: "sendMessageDraft",
     annotations: ANNOTATIONS.send,
     toolName: "send_message_draft",
-    description: "Send a streaming draft message. Content appears progressively as it's being generated.",
+    description: "Stream a partial text message while it is being generated. The draft is a temporary preview — send the final text with send_message to persist it.",
     category: "messages",
     needsChatId: true,
     canUploadFiles: false,
-    returns: "Message",
+    returns: "true",
     params: [
-      { name: "chat_id", type: ChatId, required: true, description: "Target chat ID" },
-      { name: "text", type: Text, required: true, description: "Draft message text" },
+      { name: "chat_id", type: z.number().int(), required: true, description: "Target chat ID" },
+      { name: "message_thread_id", type: z.number().int(), required: false, description: "Target message thread ID" },
+      { name: "draft_id", type: z.number().int(), required: true, description: "Non-zero draft ID; updates to the same ID are animated" },
+      { name: "text", type: Text, required: false, description: "Draft message text" },
       { name: "parse_mode", type: ParseMode, required: false, description: "Text formatting mode" },
       { name: "entities", type: MessageEntities, required: false, description: "Special entities" },
-      ...commonSendParams(),
     ],
   },
 

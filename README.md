@@ -2,30 +2,32 @@
 
 # telegram-api-mcp
 
-**Ultimate MCP server for Telegram Bot API — 169 methods, full v9.6 coverage, meta-mode, rate limiting, circuit breaker.**
+**Ultimate MCP server for Telegram Bot API — 185 methods, full v10.2 coverage, rich messages, meta-mode, rate limiting, circuit breaker.**
 
 [![Stars](https://img.shields.io/github/stars/timoncool/telegram-api-mcp?style=flat-square)](https://github.com/timoncool/telegram-api-mcp/stargazers)
 [![npm](https://img.shields.io/npm/v/telegram-api-mcp?style=flat-square)](https://www.npmjs.com/package/telegram-api-mcp)
 [![License](https://img.shields.io/github/license/timoncool/telegram-api-mcp?style=flat-square)](LICENSE)
-[![Bot API](https://img.shields.io/badge/Telegram%20Bot%20API-9.6-26A5E4?style=flat-square&logo=telegram)](https://core.telegram.org/bots/api)
+[![Bot API](https://img.shields.io/badge/Telegram%20Bot%20API-10.2-26A5E4?style=flat-square&logo=telegram)](https://core.telegram.org/bots/api)
 [![TRAIL](https://img.shields.io/badge/TRAIL-v2.1-6366f1?style=flat-square)](https://github.com/timoncool/trail-spec)
 
 </div>
 
-169/169 Bot API methods with Zod validation, token masking, tool annotations, and zero bloat (2 dependencies).
+185/185 Bot API methods with Zod validation, token masking, tool annotations, and zero bloat (2 dependencies).
 
 ## Features
 
-- **169/169 Bot API methods** — messages, media, polls, chats, forums, stickers, payments, business, stories, gifts, games, inline, managed bots
-- **Bot API 9.6** (April 2026) — managed bots, revoting polls, shuffle options, poll descriptions
-- **Meta-mode** — 2 tools instead of 169, saves ~99% context tokens
+- **185/185 Bot API methods** — messages, media, polls, chats, forums, stickers, payments, business, stories, gifts, games, inline, managed bots
+- **Rich messages** — post up to 32768 characters with headings, tables, lists, collages, slideshows, footnotes and up to 50 inline media, instead of the 1024-character caption ceiling
+- **Bot API 10.2** (July 2026) — rich messages, ephemeral messages, live photos, guest mode, join-request queries, poll media
+- **Meta-mode** — 2 tools instead of 185, saves ~99% context tokens
 - **Rate limiting** — global (30 req/sec) + per-chat (20 msg/min), token bucket with async mutex
 - **Circuit breaker** — 3-state (closed/open/half-open), auto-recovery
 - **Retry with backoff** — respects Telegram 429 `retry_after`, exponential backoff on 5xx
 - **Zod validation** — every parameter validated before hitting Telegram API
 - **Token masking** — bot token never appears in responses, logs, or error messages
 - **File upload security** — path traversal protection, configurable allowed directories
-- **Tool annotations** — all 169 methods annotated (readOnly, destructive, idempotent, openWorld)
+- **Tool annotations** — all 185 methods annotated (readOnly, destructive, idempotent, openWorld)
+- **Docs mirror + audit** — `npm run docs:refresh` re-downloads the official spec, `npm run audit` fails if any method or parameter drifts from it
 - **Response truncation** — 100K char limit to prevent context overflow
 - **Zero bloat** — only 2 dependencies: `@modelcontextprotocol/sdk` + `zod`
 
@@ -96,7 +98,7 @@ TELEGRAM_BOT_TOKEN=your_token node dist/index.js
 | `TELEGRAM_BOT_TOKEN` | **Yes** | — | Bot token from [@BotFather](https://t.me/BotFather) |
 | `TELEGRAM_DEFAULT_CHAT_ID` | No | — | Default chat ID for all tools |
 | `TELEGRAM_DEFAULT_THREAD_ID` | No | — | Default forum topic thread ID |
-| `TELEGRAM_META_MODE` | No | `false` | Use 2 meta-tools instead of 169 |
+| `TELEGRAM_META_MODE` | No | `false` | Use 2 meta-tools instead of 185 |
 | `TELEGRAM_GLOBAL_RATE_LIMIT` | No | `30` | Max requests/sec ([Telegram limit](https://core.telegram.org/bots/faq#my-bot-is-hitting-limits)) |
 | `TELEGRAM_PER_CHAT_RATE_LIMIT` | No | `20` | Max messages/min per group ([Telegram limit](https://core.telegram.org/bots/faq#my-bot-is-hitting-limits)) |
 | `TELEGRAM_MAX_RETRIES` | No | `3` | Retry attempts on transient errors |
@@ -107,7 +109,7 @@ TELEGRAM_BOT_TOKEN=your_token node dist/index.js
 
 ## Meta Mode
 
-When `TELEGRAM_META_MODE=true`, the server exposes only 2 tools instead of 169:
+When `TELEGRAM_META_MODE=true`, the server exposes only 2 tools instead of 185:
 
 - **`telegram_find`** — search methods by keyword or category
 - **`telegram_call`** — call any method by name with JSON params
@@ -122,31 +124,69 @@ AI: → telegram_call(method: "sendPoll", params: { chat_id: ..., question: "...
 
 ## API Coverage
 
-169/169 methods — **100% Bot API 9.6** (April 2026)
+185/185 methods — **100% Bot API 10.2** (July 2026)
 
 | Category | Count | Key methods |
 |----------|:---:|-------------|
 | Bot | 21 | getMe, setMyCommands, setMyProfilePhoto, getFile, getUserProfilePhotos |
+| Chat | 18 | getChat, setChatTitle, pinChatMessage, answerChatJoinRequestQuery, getUserPersonalChatMessages |
 | Stickers | 16 | sendSticker, createNewStickerSet, uploadStickerFile, setStickerKeywords |
-| Chat | 15 | getChat, setChatTitle, setChatPermissions, pinChatMessage, leaveChat |
-| Business | 14 | readBusinessMessage, setBusinessAccountName, getBusinessConnection |
+| Editing | 15 | editMessageText, editMessageMedia, deleteMessage, editEphemeralMessageText, deleteEphemeralMessage |
+| Business | 14 | readBusinessMessage, setBusinessAccountName, getBusinessAccountGifts, approveSuggestedPost |
+| Messages | 13 | sendMessage, sendRichMessage, sendRichMessageDraft, sendChecklist, deleteMessageReaction |
 | Forum | 13 | createForumTopic, editForumTopic, closeForumTopic, deleteForumTopic |
-| Editing | 10 | editMessageText, editMessageMedia, deleteMessage, deleteMessages, stopPoll |
-| Messages | 9 | sendMessage, sendMessageDraft, sendLocation, sendContact, sendChecklist |
-| Media | 9 | sendPhoto, sendVideo, sendAudio, sendDocument, sendMediaGroup, sendPaidMedia |
+| Media | 10 | sendPhoto, sendVideo, sendLivePhoto, sendMediaGroup, sendPaidMedia |
 | Members | 9 | banChatMember, promoteChatMember, setChatMemberTag, restrictChatMember |
 | Invite | 8 | createChatInviteLink, createChatSubscriptionInviteLink, approveChatJoinRequest |
 | Payments | 8 | sendInvoice, createInvoiceLink, getStarTransactions, getMyStarBalance |
 | Gifts | 8 | sendGift, getUserGifts, getChatGifts, giftPremiumSubscription, upgradeGift |
+| Inline | 5 | answerInlineQuery, answerCallbackQuery, answerGuestQuery, answerWebAppQuery |
+| Managed Bots | 5 | getManagedBotToken, getManagedBotAccessSettings, setManagedBotAccessSettings |
 | Other | 5 | verifyUser, verifyChat, setUserEmojiStatus, savePreparedInlineMessage |
 | Forwarding | 4 | forwardMessage, forwardMessages, copyMessage, copyMessages |
 | Stories | 4 | postStory, editStory, deleteStory, repostStory |
-| Inline | 4 | answerInlineQuery, answerCallbackQuery, answerWebAppQuery, savePreparedInlineMessage |
 | Updates | 4 | getUpdates, setWebhook, deleteWebhook, getWebhookInfo |
 | Games | 3 | sendGame, setGameScore, getGameHighScores |
-| Managed Bots | 3 | getManagedBotToken, replaceManagedBotToken, savePreparedKeyboardButton |
-| Polls | 1 | sendPoll (v9.6: revoting, shuffle, multiple correct, descriptions) |
+| Polls | 1 | sendPoll (revoting, shuffle, media, country restrictions) |
 | Passport | 1 | setPassportDataErrors |
+
+## Long posts: rich messages
+
+`send_photo` and friends cap the caption at **1024 characters** — that limit is set by Telegram and still applies. To publish a real post, use `send_rich_message` instead:
+
+```json
+{
+  "chat_id": "@mychannel",
+  "rich_message": {
+    "markdown": "# Heading
+
+Paragraph with **bold** and a [link](https://t.me).
+
+![](https://example.com/cover.jpg \"Cover caption\")
+
+| Model | Speed |
+|:------|------:|
+| A | **42** |
+
+> Block quote
+
+- List item
+- Another item"
+  }
+}
+```
+
+Pass exactly one of `markdown` (GitHub-flavored, plus Telegram tags), `html`, or `blocks`. Limits enforced before the request leaves the server:
+
+| Limit | Value |
+|-------|:---:|
+| Text | 32768 characters |
+| Blocks (nested included) | 500 |
+| Media attachments | 50 |
+| Table columns | 20 |
+| Nesting levels | 16 |
+
+Media inside `markdown`/`html` must be HTTP(S) URLs and sit in their own block. `send_rich_message_draft` streams a partial message as a 30-second preview while it is still being generated — finish with `send_rich_message` to persist it.
 
 ## Architecture
 
@@ -178,11 +218,16 @@ src/
     ├── updates.ts        # getUpdates, setWebhook, ...
     ├── passport.ts       # setPassportDataErrors
     └── other.ts          # verifyUser, setChatMenuButton, ...
+
+scripts/
+├── refresh-docs.mjs      # Re-download core.telegram.org/bots/* into docs/
+└── audit-registry.mjs    # Diff src/methods against the docs mirror
 ```
 
 ### Design principles
 
-- **Declarative registry** — each method is pure data (name, params, types, annotations). One generic handler serves all 169 methods. Adding a new method = one array entry.
+- **Declarative registry** — each method is pure data (name, params, types, annotations). One generic handler serves all 185 methods. Adding a new method = one array entry.
+- **Spec-checked** — `docs/` mirrors the official Bot API pages and `scripts/audit-registry.mjs` diffs the registry against it, so a new Telegram release surfaces as a failing check rather than a runtime 400.
 - **Zod validation** — every parameter validated before reaching Telegram. Clear error messages with hints instead of opaque API 400s.
 - **Token bucket rate limiting** — no race conditions (async mutex). Defaults match [Telegram's official limits](https://core.telegram.org/bots/faq#my-bot-is-hitting-limits): 30 req/sec global, 20 msg/min per group.
 - **Circuit breaker** — 429 (rate limit) is NOT counted as failure. Only real errors (5xx, network) trip the breaker. Half-open probe recovers automatically.
@@ -208,6 +253,8 @@ npm run typecheck     # Type checking without emit
 npm test              # Run all tests (vitest)
 npm run test:watch    # Watch mode
 npm run lint          # ESLint
+npm run docs:refresh  # Re-download the official Bot API docs into docs/
+npm run audit         # Diff the registry against the docs mirror
 ```
 
 ## Other Projects by [@timoncool](https://github.com/timoncool)

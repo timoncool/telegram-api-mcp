@@ -1,22 +1,32 @@
 import { z } from "zod";
-import { MethodDef, ChatId, Text, Caption, ParseMode, MessageEntities, LinkPreviewOptions, commonEditParams, BooleanFlag ,  ANNOTATIONS } from "../method-registry.js";
+import { MethodDef, ChatId, Text, Caption, ParseMode, UserId, MessageEntities, LinkPreviewOptions, RichMessage, commonEditParams, BooleanFlag ,  ANNOTATIONS } from "../method-registry.js";
+
+/** Ephemeral messages (Bot API 10.2) are addressed by receiver + ephemeral id, not by message id. */
+function ephemeralTarget() {
+  return [
+    { name: "chat_id", type: ChatId, required: true, description: "Chat the ephemeral message was sent to" },
+    { name: "receiver_user_id", type: UserId, required: true, description: "User the ephemeral message is visible to" },
+    { name: "ephemeral_message_id", type: z.number().int(), required: true, description: "Ephemeral message ID" },
+  ];
+}
 
 export const editingMethods: MethodDef[] = [
   {
     apiMethod: "editMessageText",
     annotations: ANNOTATIONS.modify,
     toolName: "edit_message_text",
-    description: "Edit the text of a message sent by the bot or via inline mode.",
+    description: "Edit the text of a message sent by the bot or via inline mode. Pass either text or rich_message.",
     category: "editing",
     needsChatId: false,
     canUploadFiles: false,
     returns: "Message or true",
     params: [
       ...commonEditParams(),
-      { name: "text", type: Text, required: true, description: "New message text (1-4096 chars)" },
+      { name: "text", type: Text, required: false, description: "New message text (1-4096 chars); required unless rich_message is set" },
       { name: "parse_mode", type: ParseMode, required: false, description: "Text formatting mode" },
       { name: "entities", type: MessageEntities, required: false, description: "Special entities" },
       { name: "link_preview_options", type: LinkPreviewOptions, required: false, description: "Link preview settings" },
+      { name: "rich_message", type: RichMessage, required: false, description: "Replace the message with rich content (10.1)" },
     ],
   },
   {
@@ -74,6 +84,7 @@ export const editingMethods: MethodDef[] = [
       ...commonEditParams(),
       { name: "latitude", type: z.number(), required: true, description: "New latitude" },
       { name: "longitude", type: z.number(), required: true, description: "New longitude" },
+      { name: "live_period", type: z.number().int(), required: false, description: "New live period in seconds from the original send date" },
       { name: "horizontal_accuracy", type: z.number().min(0).max(1500), required: false, description: "Uncertainty radius" },
       { name: "heading", type: z.number().int().min(1).max(360), required: false, description: "Direction in degrees" },
       { name: "proximity_alert_radius", type: z.number().int(), required: false, description: "Proximity alert distance" },
@@ -94,12 +105,13 @@ export const editingMethods: MethodDef[] = [
     apiMethod: "editMessageChecklist",
     annotations: ANNOTATIONS.modify,
     toolName: "edit_message_checklist",
-    description: "Edit a checklist message (v9.1).",
+    description: "Edit a checklist message. Requires a business connection.",
     category: "editing",
     needsChatId: true,
     canUploadFiles: false,
     returns: "Message or true",
     params: [
+      { name: "business_connection_id", type: z.string(), required: true, description: "Business connection ID" },
       { name: "chat_id", type: ChatId, required: true, description: "Chat ID" },
       { name: "message_id", type: z.number().int(), required: true, description: "Message ID" },
       { name: "checklist", type: z.any(), required: true, description: "New InputChecklist object" },
@@ -149,5 +161,80 @@ export const editingMethods: MethodDef[] = [
       { name: "business_connection_id", type: z.string(), required: false, description: "Business connection ID" },
       { name: "reply_markup", type: z.any(), required: false, description: "Inline keyboard markup" },
     ],
+  },
+  {
+    apiMethod: "editEphemeralMessageText",
+    annotations: ANNOTATIONS.modify,
+    toolName: "edit_ephemeral_message_text",
+    description: "Edit the text of an ephemeral message (Bot API 10.2). Delivery of the edit is not guaranteed if the user is offline.",
+    category: "editing",
+    needsChatId: true,
+    canUploadFiles: false,
+    returns: "true",
+    params: [
+      ...ephemeralTarget(),
+      { name: "text", type: Text, required: true, description: "New message text (1-4096 chars)" },
+      { name: "parse_mode", type: ParseMode, required: false, description: "Text formatting mode" },
+      { name: "entities", type: MessageEntities, required: false, description: "Special entities" },
+      { name: "link_preview_options", type: LinkPreviewOptions, required: false, description: "Link preview settings" },
+      { name: "reply_markup", type: z.any(), required: false, description: "Inline keyboard markup" },
+    ],
+  },
+  {
+    apiMethod: "editEphemeralMessageMedia",
+    annotations: ANNOTATIONS.modify,
+    toolName: "edit_ephemeral_message_media",
+    description: "Edit the media of an ephemeral message (Bot API 10.2).",
+    category: "editing",
+    needsChatId: true,
+    canUploadFiles: true,
+    returns: "true",
+    params: [
+      ...ephemeralTarget(),
+      { name: "media", type: z.any(), required: true, description: "New InputMedia object" },
+      { name: "reply_markup", type: z.any(), required: false, description: "Inline keyboard markup" },
+    ],
+  },
+  {
+    apiMethod: "editEphemeralMessageCaption",
+    annotations: ANNOTATIONS.modify,
+    toolName: "edit_ephemeral_message_caption",
+    description: "Edit the caption of an ephemeral media message (Bot API 10.2).",
+    category: "editing",
+    needsChatId: true,
+    canUploadFiles: false,
+    returns: "true",
+    params: [
+      ...ephemeralTarget(),
+      { name: "caption", type: Caption, required: false, description: "New caption (0-1024 visible chars)" },
+      { name: "parse_mode", type: ParseMode, required: false, description: "Caption formatting mode" },
+      { name: "caption_entities", type: MessageEntities, required: false, description: "Caption entities" },
+      { name: "reply_markup", type: z.any(), required: false, description: "Inline keyboard markup" },
+    ],
+  },
+  {
+    apiMethod: "editEphemeralMessageReplyMarkup",
+    annotations: ANNOTATIONS.modify,
+    toolName: "edit_ephemeral_message_reply_markup",
+    description: "Edit the inline keyboard of an ephemeral message (Bot API 10.2).",
+    category: "editing",
+    needsChatId: true,
+    canUploadFiles: false,
+    returns: "true",
+    params: [
+      ...ephemeralTarget(),
+      { name: "reply_markup", type: z.any(), required: false, description: "Inline keyboard markup" },
+    ],
+  },
+  {
+    apiMethod: "deleteEphemeralMessage",
+    annotations: ANNOTATIONS.destructive,
+    toolName: "delete_ephemeral_message",
+    description: "Delete an ephemeral message (Bot API 10.2). Delivery of the deletion is not guaranteed if the user is offline.",
+    category: "editing",
+    needsChatId: true,
+    canUploadFiles: false,
+    returns: "true",
+    params: ephemeralTarget(),
   },
 ];

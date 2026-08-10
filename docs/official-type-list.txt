@@ -1,8 +1,6 @@
-Accent colors
 AcceptedGiftTypes
 AffiliateInfo
 Animation
-April 3, 2026
 Audio
 BackgroundFill
 BackgroundFillFreeformGradient
@@ -14,6 +12,7 @@ BackgroundTypeFill
 BackgroundTypePattern
 BackgroundTypeWallpaper
 Birthdate
+BotAccessSettings
 BotCommand
 BotCommandScope
 BotCommandScopeAllChatAdministrators
@@ -26,6 +25,7 @@ BotCommandScopeDefault
 BotDescription
 BotName
 BotShortDescription
+BotSubscriptionUpdated
 BusinessBotRights
 BusinessConnection
 BusinessIntro
@@ -68,21 +68,20 @@ ChecklistTask
 ChecklistTasksAdded
 ChecklistTasksDone
 ChosenInlineResult
+Community
+CommunityChatAdded
+CommunityChatRemoved
 Contact
 CopyTextButton
-Determining list of commands
 Dice
 DirectMessagePriceChanged
 DirectMessagesTopic
-Do I need a Local Bot API Server
 Document
 EncryptedCredentials
 EncryptedPassportElement
 ExternalReplyInfo
-February 9, 2026
 File
 ForceReply
-Formatting options
 ForumTopic
 ForumTopicClosed
 ForumTopicCreated
@@ -101,8 +100,6 @@ GiveawayCompleted
 GiveawayCreated
 GiveawayWinners
 InaccessibleMessage
-Inline mode methods
-Inline mode objects
 InlineKeyboardButton
 InlineKeyboardMarkup
 InlineQuery
@@ -138,16 +135,51 @@ InputMedia
 InputMediaAnimation
 InputMediaAudio
 InputMediaDocument
+InputMediaLink
+InputMediaLivePhoto
+InputMediaLocation
 InputMediaPhoto
+InputMediaSticker
+InputMediaVenue
 InputMediaVideo
+InputMediaVoiceNote
 InputMessageContent
 InputPaidMedia
+InputPaidMediaLivePhoto
 InputPaidMediaPhoto
 InputPaidMediaVideo
+InputPollMedia
 InputPollOption
+InputPollOptionMedia
 InputProfilePhoto
 InputProfilePhotoAnimated
 InputProfilePhotoStatic
+InputRichBlock
+InputRichBlockAnchor
+InputRichBlockAnimation
+InputRichBlockAudio
+InputRichBlockBlockQuotation
+InputRichBlockCollage
+InputRichBlockDetails
+InputRichBlockDivider
+InputRichBlockFooter
+InputRichBlockList
+InputRichBlockListItem
+InputRichBlockMap
+InputRichBlockMathematicalExpression
+InputRichBlockParagraph
+InputRichBlockPhoto
+InputRichBlockPreformatted
+InputRichBlockPullQuotation
+InputRichBlockSectionHeading
+InputRichBlockSlideshow
+InputRichBlockTable
+InputRichBlockThinking
+InputRichBlockVideo
+InputRichBlockVoiceNote
+InputRichMessage
+InputRichMessageContent
+InputRichMessageMedia
 InputSticker
 InputStoryContent
 InputStoryContentPhoto
@@ -161,14 +193,14 @@ KeyboardButtonRequestChat
 KeyboardButtonRequestManagedBot
 KeyboardButtonRequestUsers
 LabeledPrice
+Link
 LinkPreviewOptions
+LivePhoto
 Location
 LocationAddress
 LoginUrl
-Making requests when getting updates
 ManagedBotCreated
 ManagedBotUpdated
-March 1, 2026
 MaskPosition
 MaybeInaccessibleMessage
 MenuButton
@@ -191,9 +223,9 @@ OwnedGift
 OwnedGiftRegular
 OwnedGiftUnique
 OwnedGifts
-Paid Broadcasts
 PaidMedia
 PaidMediaInfo
+PaidMediaLivePhoto
 PaidMediaPhoto
 PaidMediaPreview
 PaidMediaPurchased
@@ -214,13 +246,13 @@ PassportFile
 PhotoSize
 Poll
 PollAnswer
+PollMedia
 PollOption
 PollOptionAdded
 PollOptionDeleted
 PreCheckoutQuery
 PreparedInlineMessage
 PreparedKeyboardButton
-Profile accent colors
 ProximityAlertTriggered
 ReactionCount
 ReactionType
@@ -236,7 +268,59 @@ RevenueWithdrawalState
 RevenueWithdrawalStateFailed
 RevenueWithdrawalStatePending
 RevenueWithdrawalStateSucceeded
-Sending files
+RichBlock
+RichBlockAnchor
+RichBlockAnimation
+RichBlockAudio
+RichBlockBlockQuotation
+RichBlockCaption
+RichBlockCollage
+RichBlockDetails
+RichBlockDivider
+RichBlockFooter
+RichBlockList
+RichBlockListItem
+RichBlockMap
+RichBlockMathematicalExpression
+RichBlockParagraph
+RichBlockPhoto
+RichBlockPreformatted
+RichBlockPullQuotation
+RichBlockSectionHeading
+RichBlockSlideshow
+RichBlockTable
+RichBlockTableCell
+RichBlockThinking
+RichBlockVideo
+RichBlockVoiceNote
+RichMessage
+RichText
+RichTextAnchor
+RichTextAnchorLink
+RichTextBankCardNumber
+RichTextBold
+RichTextBotCommand
+RichTextCashtag
+RichTextCode
+RichTextCustomEmoji
+RichTextDateTime
+RichTextEmailAddress
+RichTextHashtag
+RichTextItalic
+RichTextMarked
+RichTextMathematicalExpression
+RichTextMention
+RichTextPhoneNumber
+RichTextReference
+RichTextReferenceLink
+RichTextSpoiler
+RichTextStrikethrough
+RichTextSubscript
+RichTextSuperscript
+RichTextTextMention
+RichTextUnderline
+RichTextUrl
+SentGuestMessage
 SentWebAppMessage
 SharedUser
 ShippingAddress

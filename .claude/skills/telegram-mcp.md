@@ -5,13 +5,13 @@ description: Guide for using the Telegram Bot API MCP server effectively. Use wh
 
 # Telegram Bot API MCP Server — Usage Guide
 
-You have access to the Telegram Bot API via MCP tools. This server covers **100% of Bot API 9.6** (169 methods).
+You have access to the Telegram Bot API via MCP tools. This server covers **100% of Bot API 10.2** (185 methods).
 
 ## Detecting the Mode
 
 The server runs in one of two modes:
 
-### Standard Mode (169 tools)
+### Standard Mode (185 tools)
 Each Bot API method is a separate tool with snake_case naming:
 - `send_message`, `send_photo`, `ban_chat_member`, `get_chat`, etc.
 - Parameters are validated with Zod before hitting the API
@@ -51,8 +51,52 @@ If the user says "send message" without specifying a chat — just send it, the 
 ```
 Supports `HTML`, `Markdown`, `MarkdownV2`. Prefer HTML — it's the least error-prone.
 
+### Long posts — use `send_rich_message`, not a caption
+A media caption is capped at **1024 characters** by Telegram, and `send_message` at 4096. For an actual post — heading, paragraphs, images, a table — use `send_rich_message`:
+
+```json
+{
+  "chat_id": "@mychannel",
+  "rich_message": {
+    "markdown": "# Heading
+
+Intro paragraph with **bold** and a [link](https://t.me).
+
+![](https://example.com/cover.jpg \"Cover caption\")
+
+## Section
+
+| Model | Speed |
+|:------|------:|
+| A | **42** |
+
+> Block quote
+
+- Item one
+- Item two"
+  }
+}
+```
+
+Pass **exactly one** of `markdown`, `html`, or `blocks` inside `rich_message`.
+
+Limits (validated before the request is sent): **32768 characters**, **500 blocks** (nested items count), **50 media**, **20 table columns**, **16 nesting levels**.
+
+Rich Markdown is GitHub-flavored plus Telegram extensions:
+- `# H1` … `###### H6`, `---` divider, `- item` / `1. item`, `- [ ] task`
+- `**bold**`, `*italic*`, `~~strike~~`, `==marked==`, `||spoiler||`, `` `code` ``, ```` ```python ```` blocks
+- `<u>underline</u>`, `<sub>`, `<sup>` for what Markdown lacks
+- Tables `| a | b |` with `|:---|---:|` alignment
+- Footnotes `text[^id]` + `[^id]: definition`
+- Math `$x^2$` inline, `$$E = mc^2$$` block
+- Media as its own block: `![](https://host/photo.jpg "Caption")` — **HTTP(S) URLs only**, no file_id, no upload
+- `<details open><summary>Title</summary>…</details>`, `<aside>Pull quote<cite>Author</cite></aside>`
+- `<tg-collage>`/`<tg-slideshow>` wrapping several media blocks, `<tg-map lat="41.9" long="12.5" zoom="14"/>`
+
+`send_rich_message_draft` streams a partial message as a temporary 30-second preview (private chats only); persist the result with `send_rich_message`.
+
 ### Send media
-Use `send_photo`, `send_video`, `send_document`, `send_audio`, `send_animation`, `send_voice`, `send_video_note`.
+Use `send_photo`, `send_video`, `send_document`, `send_audio`, `send_animation`, `send_voice`, `send_video_note`, `send_live_photo`.
 
 The media parameter accepts:
 1. **file_id** — reuse a file already on Telegram servers (fastest)
@@ -85,7 +129,7 @@ The media parameter accepts:
 }
 ```
 
-### Polls (v9.6 features)
+### Polls
 ```json
 {
   "chat_id": 123,
@@ -96,7 +140,8 @@ The media parameter accepts:
   "description": "Pick your favorite programming language"
 }
 ```
-New in 9.6: `allows_revoting`, `shuffle_options`, `allow_adding_options`, `hide_results_until_closes`, `description`, `correct_option_ids` (array, replaces old `correct_option_id`).
+`allows_revoting`, `shuffle_options`, `allow_adding_options`, `hide_results_until_closes`, `description`, `correct_option_ids` (array, replaces the old `correct_option_id`).
+Bot API 10.0 added `media` and `explanation_media` (InputPollMedia), `members_only` and `country_codes` (channel chats only), and lowered the minimum to 1 option.
 
 ### Edit a sent message
 ```json
@@ -167,8 +212,9 @@ These are enforced by Telegram (and by our rate limiter):
 - **~1 message/second** to the same individual chat
 - **50 MB** max file upload
 - **20 MB** max file download via `get_file`
-- **4096 chars** max message text
-- **1024 chars** max caption
+- **4096 chars** max message text (`send_message`)
+- **1024 chars** max caption (`send_photo` & co)
+- **32768 chars** max rich message (`send_rich_message`) — use this for long posts
 - **300 chars** max poll question
 - **100 messages** max in `delete_messages`
 - **10 items** max in `send_media_group`
@@ -216,4 +262,6 @@ Use `category` param to filter:
 7. **Bot must be admin** to delete others' messages, ban users, pin messages, manage topics
 8. **Bot must be in the chat** to send messages (except via inline mode)
 9. When editing inline messages, use `inline_message_id` instead of `chat_id` + `message_id`
-10. `sendMessageDraft` sends streaming text — useful for showing "typing" with progressive content
+10. `send_message_draft` / `send_rich_message_draft` stream a temporary preview while content is generated — always follow with the real send to persist it
+11. `message_effect_id` is the effect parameter (private chats only) — there is no `effect_id`
+12. Ephemeral messages (10.2): pass `receiver_user_id` on a send method to make it visible to one user only, then edit/delete it with the `*_ephemeral_message_*` tools

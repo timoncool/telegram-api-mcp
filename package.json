@@ -1,7 +1,7 @@
 {
   "name": "telegram-api-mcp",
-  "version": "0.1.0",
-  "description": "Ultimate Telegram Bot API v9.6 MCP Server — 169 methods, meta-mode, rate limiting, circuit breaker",
+  "version": "0.2.0",
+  "description": "Ultimate Telegram Bot API v10.2 MCP Server — 185 methods incl. rich messages, meta-mode, rate limiting, circuit breaker",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -14,6 +14,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "docs:refresh": "node scripts/refresh-docs.mjs",
+    "audit": "npm run build && node scripts/audit-registry.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
     "prepublishOnly": "npm run build"

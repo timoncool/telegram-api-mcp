@@ -30,4 +30,24 @@ export const managedBotMethods: MethodDef[] = [
       { name: "button", type: z.any(), required: true, description: "PreparedKeyboardButton object" },
     ],
   },
+  {
+    annotations: ANNOTATIONS.readOnly,
+    apiMethod: "getManagedBotAccessSettings", toolName: "get_managed_bot_access_settings",
+    description: "Get the access settings of a managed bot (v10.0).", category: "managed_bots",
+    needsChatId: false, canUploadFiles: false, returns: "BotAccessSettings",
+    params: [
+      { name: "user_id", type: UserId, required: true, description: "Managed bot user ID" },
+    ],
+  },
+  {
+    annotations: ANNOTATIONS.modify,
+    apiMethod: "setManagedBotAccessSettings", toolName: "set_managed_bot_access_settings",
+    description: "Change the access settings of a managed bot (v10.0).", category: "managed_bots",
+    needsChatId: false, canUploadFiles: false, returns: "true",
+    params: [
+      { name: "user_id", type: UserId, required: true, description: "Managed bot user ID" },
+      { name: "is_access_restricted", type: z.boolean(), required: true, description: "Restrict access to the bot to the listed users only" },
+      { name: "added_user_ids", type: z.array(z.number().int()), required: false, description: "Users allowed to access the bot" },
+    ],
+  },
 ];

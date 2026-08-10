@@ -27,6 +27,7 @@ export const chatMethods: MethodDef[] = [
     returns: "Array of ChatMember",
     params: [
       { name: "chat_id", type: ChatId, required: true, description: "Chat ID or @username" },
+      { name: "return_bots", type: BooleanFlag, required: false, description: "Include bot administrators in the result (v10.0)" },
     ],
   },
   {
@@ -335,6 +336,7 @@ export const chatMethods: MethodDef[] = [
     canUploadFiles: false,
     returns: "true",
     params: [
+      { name: "business_connection_id", type: z.string(), required: false, description: "Business connection ID on behalf of which the message was pinned" },
       { name: "chat_id", type: ChatId, required: true, description: "Chat ID or @username" },
       { name: "message_id", type: z.number().int(), required: false, description: "Message ID to unpin (unpins latest if omitted)" },
     ],
@@ -442,6 +444,50 @@ export const chatMethods: MethodDef[] = [
     params: [
       { name: "chat_id", type: ChatId, required: true, description: "Chat ID or @username" },
       { name: "user_id", type: UserId, required: true, description: "User ID to decline" },
+    ],
+  },
+
+  // ─── Join Request Queries (v10.1) ─────────────────────────────
+  {
+    apiMethod: "answerChatJoinRequestQuery",
+    annotations: ANNOTATIONS.modify,
+    toolName: "answer_chat_join_request_query",
+    description: "Process a received chat join request query (v10.1). Used by guard bots that vet join requests.",
+    category: "chat",
+    needsChatId: false,
+    canUploadFiles: false,
+    returns: "true",
+    params: [
+      { name: "chat_join_request_query_id", type: z.string(), required: true, description: "Join request query ID" },
+      { name: "result", type: z.string(), required: true, description: "Outcome of the join request query" },
+    ],
+  },
+  {
+    apiMethod: "sendChatJoinRequestWebApp",
+    annotations: ANNOTATIONS.send,
+    toolName: "send_chat_join_request_web_app",
+    description: "Show a Mini App to a user before deciding a join request (v10.1). Resolve the request afterwards with answer_chat_join_request_query.",
+    category: "chat",
+    needsChatId: false,
+    canUploadFiles: false,
+    returns: "true",
+    params: [
+      { name: "chat_join_request_query_id", type: z.string(), required: true, description: "Join request query ID" },
+      { name: "web_app_url", type: z.string(), required: true, description: "HTTPS URL of the Mini App to open" },
+    ],
+  },
+  {
+    apiMethod: "getUserPersonalChatMessages",
+    annotations: ANNOTATIONS.readOnly,
+    toolName: "get_user_personal_chat_messages",
+    description: "Get the last messages from the personal chat a user has added to their profile (v10.0).",
+    category: "chat",
+    needsChatId: false,
+    canUploadFiles: false,
+    returns: "Array of Message",
+    params: [
+      { name: "user_id", type: UserId, required: true, description: "User ID" },
+      { name: "limit", type: z.number().int(), required: true, description: "Number of messages to return" },
     ],
   },
 

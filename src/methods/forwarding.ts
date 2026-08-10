@@ -1,5 +1,15 @@
 import { z } from "zod";
-import { MethodDef, ChatId, Caption, BooleanFlag ,  ANNOTATIONS } from "../method-registry.js";
+import { MethodDef, ChatId, Caption, BooleanFlag, SuggestedPostParameters ,  ANNOTATIONS } from "../method-registry.js";
+
+/** Both forward* and copy* target a chat the same way. */
+function target() {
+  return [
+    { name: "chat_id", type: ChatId, required: true, description: "Target chat ID" },
+    { name: "from_chat_id", type: ChatId, required: true, description: "Source chat ID" },
+    { name: "message_thread_id", type: z.number().int(), required: false, description: "Forum topic thread ID" },
+    { name: "direct_messages_topic_id", type: z.number().int(), required: false, description: "Direct messages topic ID; required when sending to a direct messages chat" },
+  ];
+}
 
 export const forwardingMethods: MethodDef[] = [
   {
@@ -12,12 +22,13 @@ export const forwardingMethods: MethodDef[] = [
     canUploadFiles: false,
     returns: "Message",
     params: [
-      { name: "chat_id", type: ChatId, required: true, description: "Target chat ID" },
-      { name: "from_chat_id", type: ChatId, required: true, description: "Source chat ID" },
+      ...target(),
       { name: "message_id", type: z.number().int(), required: true, description: "Message ID to forward" },
-      { name: "message_thread_id", type: z.number().int(), required: false, description: "Forum topic thread ID" },
+      { name: "video_start_timestamp", type: z.number().int(), required: false, description: "New start timestamp for the forwarded video" },
       { name: "disable_notification", type: BooleanFlag, required: false, description: "Send silently" },
       { name: "protect_content", type: BooleanFlag, required: false, description: "Protect from forwarding" },
+      { name: "message_effect_id", type: z.string(), required: false, description: "Message effect ID; private chats only" },
+      { name: "suggested_post_parameters", type: SuggestedPostParameters, required: false, description: "Suggested post parameters; direct messages chats only" },
     ],
   },
   {
@@ -30,10 +41,8 @@ export const forwardingMethods: MethodDef[] = [
     canUploadFiles: false,
     returns: "Array of MessageId",
     params: [
-      { name: "chat_id", type: ChatId, required: true, description: "Target chat ID" },
-      { name: "from_chat_id", type: ChatId, required: true, description: "Source chat ID" },
+      ...target(),
       { name: "message_ids", type: z.array(z.number().int()), required: true, description: "Message IDs to forward" },
-      { name: "message_thread_id", type: z.number().int(), required: false, description: "Forum topic thread ID" },
       { name: "disable_notification", type: BooleanFlag, required: false, description: "Send silently" },
       { name: "protect_content", type: BooleanFlag, required: false, description: "Protect from forwarding" },
     ],
@@ -48,18 +57,20 @@ export const forwardingMethods: MethodDef[] = [
     canUploadFiles: false,
     returns: "MessageId",
     params: [
-      { name: "chat_id", type: ChatId, required: true, description: "Target chat ID" },
-      { name: "from_chat_id", type: ChatId, required: true, description: "Source chat ID" },
+      ...target(),
       { name: "message_id", type: z.number().int(), required: true, description: "Message ID to copy" },
-      { name: "message_thread_id", type: z.number().int(), required: false, description: "Forum topic thread ID" },
+      { name: "video_start_timestamp", type: z.number().int(), required: false, description: "New start timestamp for the copied video" },
       { name: "caption", type: Caption, required: false, description: "New caption (0-1024 visible chars)" },
       { name: "parse_mode", type: z.enum(["HTML", "Markdown", "MarkdownV2"]), required: false, description: "Caption formatting" },
       { name: "caption_entities", type: z.any(), required: false, description: "Caption entities" },
       { name: "show_caption_above_media", type: BooleanFlag, required: false, description: "Show caption above media" },
-      { name: "reply_parameters", type: z.any(), required: false, description: "Reply settings" },
-      { name: "reply_markup", type: z.any(), required: false, description: "Keyboard markup" },
       { name: "disable_notification", type: BooleanFlag, required: false, description: "Send silently" },
       { name: "protect_content", type: BooleanFlag, required: false, description: "Protect from forwarding" },
+      { name: "allow_paid_broadcast", type: BooleanFlag, required: false, description: "Allow paid broadcast (up to 1000 msg/s for 0.1 Stars each)" },
+      { name: "message_effect_id", type: z.string(), required: false, description: "Message effect ID; private chats only" },
+      { name: "suggested_post_parameters", type: SuggestedPostParameters, required: false, description: "Suggested post parameters; direct messages chats only" },
+      { name: "reply_parameters", type: z.any(), required: false, description: "Reply settings" },
+      { name: "reply_markup", type: z.any(), required: false, description: "Keyboard markup" },
     ],
   },
   {
@@ -72,10 +83,8 @@ export const forwardingMethods: MethodDef[] = [
     canUploadFiles: false,
     returns: "Array of MessageId",
     params: [
-      { name: "chat_id", type: ChatId, required: true, description: "Target chat ID" },
-      { name: "from_chat_id", type: ChatId, required: true, description: "Source chat ID" },
+      ...target(),
       { name: "message_ids", type: z.array(z.number().int()), required: true, description: "Message IDs to copy" },
-      { name: "message_thread_id", type: z.number().int(), required: false, description: "Forum topic thread ID" },
       { name: "disable_notification", type: BooleanFlag, required: false, description: "Send silently" },
       { name: "protect_content", type: BooleanFlag, required: false, description: "Protect from forwarding" },
       { name: "remove_caption", type: BooleanFlag, required: false, description: "Remove captions" },

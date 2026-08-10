@@ -15,7 +15,7 @@ export const stickerMethods: MethodDef[] = [
       { name: "chat_id", type: ChatId, required: true, description: "Target chat ID" },
       { name: "sticker", type: FileInput, required: true, description: "Sticker to send (file_id, URL, or path)" },
       { name: "emoji", type: z.string(), required: false, description: "Associated emoji" },
-      ...commonSendParams(),
+      ...commonSendParams({ directMessagesTopic: true, ephemeral: true, suggestedPost: true }),
     ],
   },
   {
@@ -162,6 +162,7 @@ export const stickerMethods: MethodDef[] = [
       { name: "name", type: z.string(), required: true, description: "Sticker set name" },
       { name: "user_id", type: z.number().int(), required: true, description: "User ID of set owner" },
       { name: "thumbnail", type: FileInput, required: false, description: "Thumbnail file" },
+      { name: "format", type: z.enum(["static", "animated", "video"]), required: true, description: "Format of the stickers in the set" },
     ],
   },
   {
