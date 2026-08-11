@@ -167,12 +167,19 @@ function countRichText(node: unknown): number {
 
 export const RichMessage = z
   .object({
-    blocks: z.array(z.any()).optional(),
-    html: z.string().optional(),
-    markdown: z.string().optional(),
-    media: z.array(z.any()).optional(),
-    is_rtl: z.boolean().optional(),
-    skip_entity_detection: z.boolean().optional(),
+    markdown: z.string().optional().describe(
+      "Post body as Rich Markdown — GitHub-flavored plus Telegram extensions: '# H1'..'###### H6', " +
+      "**bold**, *italic*, ~~strike~~, ==marked==, ||spoiler||, `code`, ```lang blocks, '> quote', " +
+      "'- item'/'1. item'/'- [ ] task', tables '| a | b |' with '|:--|--:|', footnotes 'x[^1]' + '[^1]: …', " +
+      "math $x^2$ and $$block$$, '---' divider, <u>/<sub>/<sup>, <details>, <aside>Pull quote<cite>Author</cite></aside>, " +
+      "<tg-collage>/<tg-slideshow> around several media blocks, <tg-map lat=\"..\" long=\"..\" zoom=\"..\"/>. " +
+      "Media is its OWN block and must be an HTTP(S) URL: ![](https://host/pic.jpg \"Caption\") — file_id and local paths do not work here."
+    ),
+    html: z.string().optional().describe("Post body as Rich HTML instead of markdown — same feature set, HTML syntax"),
+    blocks: z.array(z.any()).optional().describe("Post body as an array of InputRichBlock objects instead of markdown/html"),
+    media: z.array(z.any()).optional().describe("InputRichMessageMedia for uploads referenced from markdown/html as tg://photo?id= — not needed when media are plain URLs"),
+    is_rtl: z.boolean().optional().describe("Render right-to-left"),
+    skip_entity_detection: z.boolean().optional().describe("Do not auto-detect URLs, mentions, hashtags, phone numbers"),
   })
   .passthrough()
   .superRefine((msg, ctx) => {
@@ -180,7 +187,9 @@ export const RichMessage = z
     if (forms.length !== 1) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Exactly one of blocks, html or markdown must be set (got ${forms.length ? forms.join(" + ") : "none"})`,
+        message:
+          `A rich message needs exactly one of markdown, html or blocks — got ${forms.length ? forms.join(" + ") : "none"}. ` +
+          `Call telegram_format with topic "rich_message" for the full syntax.`,
       });
     }
     const length = msg.html
@@ -191,27 +200,28 @@ export const RichMessage = z
     if (length > RICH_MESSAGE_LIMITS.text) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Rich message text is ${length} characters, limit is ${RICH_MESSAGE_LIMITS.text}`,
+        message: `Rich message text is ${length} characters, limit is ${RICH_MESSAGE_LIMITS.text}. Split it across two posts.`,
       });
     }
     const blocks = countRichBlocks(msg.blocks);
     if (blocks > RICH_MESSAGE_LIMITS.blocks) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Rich message has ${blocks} blocks (nested included), limit is ${RICH_MESSAGE_LIMITS.blocks}`,
+        message: `Rich message has ${blocks} blocks — nested list items and table rows count towards the ${RICH_MESSAGE_LIMITS.blocks} block limit.`,
       });
     }
     if (msg.media && msg.media.length > RICH_MESSAGE_LIMITS.media) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Rich message has ${msg.media.length} media attachments, limit is ${RICH_MESSAGE_LIMITS.media}`,
+        message: `Rich message has ${msg.media.length} media attachments, limit is ${RICH_MESSAGE_LIMITS.media}.`,
       });
     }
   })
   .describe(
-    `InputRichMessage — exactly one of markdown (GitHub-flavored + Telegram tags), html, or blocks. ` +
-    `Up to ${RICH_MESSAGE_LIMITS.text} chars, ${RICH_MESSAGE_LIMITS.blocks} blocks, ${RICH_MESSAGE_LIMITS.media} media. ` +
-    `Media inside markdown/html must be HTTP(S) URLs referenced as separate blocks.`,
+    `InputRichMessage — the long-form post format. Set EXACTLY ONE of markdown, html or blocks. ` +
+    `Limits: ${RICH_MESSAGE_LIMITS.text} characters, ${RICH_MESSAGE_LIMITS.blocks} blocks (nested items count), ` +
+    `${RICH_MESSAGE_LIMITS.media} media, ${RICH_MESSAGE_LIMITS.tableColumns} table columns, ${RICH_MESSAGE_LIMITS.nesting} nesting levels. ` +
+    `Images go in their own block as HTTP(S) URLs. Unsure of the syntax? Call telegram_format with topic "rich_message" first.`,
   );
 
 // ─── Common param groups (DRY) ─────────────────────────────────────────

@@ -36,7 +36,7 @@ export const messageMethods: MethodDef[] = [
       `Send a rich message (Bot API 10.1) — the long-form post format. Up to ${RICH_MESSAGE_LIMITS.text} characters ` +
       `with headings, lists, tables, block quotes, pull quotes, collages, slideshows, details blocks, footnotes, ` +
       `formulas, maps and up to ${RICH_MESSAGE_LIMITS.media} inline media. Use this instead of send_photo when a post ` +
-      `exceeds the 1024-character caption limit.`,
+      `exceeds the 1024-character caption limit. Call telegram_format with topic "rich_message" for the exact syntax before building the post.`,
     category: "messages",
     needsChatId: true,
     canUploadFiles: false,

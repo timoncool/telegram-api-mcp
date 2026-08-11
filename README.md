@@ -19,6 +19,7 @@
 - **185/185 Bot API methods** — messages, media, polls, chats, forums, stickers, payments, business, stories, gifts, games, inline, managed bots
 - **Rich messages** — post up to 32768 characters with headings, tables, lists, collages, slideshows, footnotes and up to 50 inline media, instead of the 1024-character caption ceiling
 - **Bot API 10.2** (July 2026) — rich messages, ephemeral messages, live photos, guest mode, join-request queries, poll media
+- **`telegram_format` tool** — the server explains the exact shape of `rich_message`, `media`, `reply_markup`, `poll` and more *before* you send, so an agent never has to guess the syntax (also exposed as MCP resources under `telegram://format/…`)
 - **Meta-mode** — 2 tools instead of 185, saves ~99% context tokens
 - **Rate limiting** — global (30 req/sec) + per-chat (20 msg/min), token bucket with async mutex
 - **Circuit breaker** — 3-state (closed/open/half-open), auto-recovery
@@ -176,6 +177,14 @@ Paragraph with **bold** and a [link](https://t.me).
 }
 ```
 
+Not sure of the syntax? Ask the server — it ships the reference:
+
+```
+telegram_format(topic: "rich_message")
+```
+
+`telegram_format` also answers for `caption`, `media`, `reply_markup`, `poll`, `checklist`, `reply_parameters`, `link_preview_options` and `suggested_post_parameters`, by topic, by tool name (`send_media_group`), or in plain wording (`"long post"`, `"album"`, `"buttons"`). The same docs are served as MCP resources at `telegram://format/<topic>`.
+
 Pass exactly one of `markdown` (GitHub-flavored, plus Telegram tags), `html`, or `blocks`. Limits enforced before the request leaves the server:
 
 | Limit | Value |
@@ -199,6 +208,7 @@ src/
 ├── rate-limiter.ts       # Token bucket: global + per-chat
 ├── circuit-breaker.ts    # 3-state circuit breaker (closed/open/half-open)
 ├── method-registry.ts    # Declarative method definitions + Zod schema builder
+├── formats.ts            # Reference for structured params, served by telegram_format
 └── methods/
     ├── index.ts          # Aggregator + search
     ├── messages.ts       # sendMessage, sendDice, sendChecklist, ...

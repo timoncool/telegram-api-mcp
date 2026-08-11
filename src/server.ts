@@ -8,6 +8,7 @@ import { TelegramClient, TelegramApiError } from "./telegram-client.js";
 import { MethodDef, buildZodSchema } from "./method-registry.js";
 import { allMethods, searchMethods, findMethodByApiName } from "./methods/index.js";
 import { CircuitOpenError } from "./circuit-breaker.js";
+import { FORMATS, findFormat, formatIndex } from "./formats.js";
 import { Trail } from "./trail.js";
 
 /** Pre-built Zod schemas for all methods (built once, reused on every call). */
@@ -42,6 +43,7 @@ export async function startServer(config: Config): Promise<void> {
     registerAllTools(server, client);
   }
 
+  registerFormatTool(server);
   trailInstance = registerTrailTools(server);
   registerDownloadTool(server, client);
 
@@ -140,6 +142,59 @@ function registerMetaTools(server: McpServer, client: TelegramClient): void {
       return executeMethod(client, methodDef, (args.params || {}) as Record<string, unknown>);
     }
   );
+}
+
+// ─── Formats ───────────────────────────────────────────────────────────
+
+/**
+ * A JSON Schema can say `rich_message: object`; it cannot teach an agent what a rich
+ * post is or how its markdown works. This tool answers that question before anything
+ * is sent, so a malformed post never reaches a channel to find out.
+ */
+function registerFormatTool(server: McpServer): void {
+  server.tool(
+    "telegram_format",
+    "Ask what shape a structured Telegram parameter must have BEFORE sending. Call this whenever you " +
+      "are about to build a rich post, an album, a keyboard, or a poll and are not certain of the exact " +
+      "syntax. Topics: " + FORMATS.map((f) => f.topic).join(", ") + ". Omit the topic to list them all. " +
+      "For a post longer than a 1024-character caption, ask for 'rich_message'.",
+    {
+      topic: z.string().optional().describe(
+        "Format to explain — a topic ('rich_message', 'media', 'reply_markup', 'poll'), a tool name " +
+        "('send_rich_message', 'send_media_group'), or plain wording ('long post', 'table', 'album', 'buttons')"
+      ),
+    },
+    { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+    async (params) => {
+      if (!params.topic) {
+        return { content: [{ type: "text" as const, text: formatIndex() }] };
+      }
+      const doc = findFormat(params.topic);
+      if (!doc) {
+        return {
+          content: [{ type: "text" as const, text: `No format named "${params.topic}".\n\n${formatIndex()}` }],
+          isError: true,
+        };
+      }
+      return {
+        content: [{
+          type: "text" as const,
+          text: `${doc.body}\n\n---\nApplies to: ${doc.applies}`,
+        }],
+      };
+    }
+  );
+
+  for (const doc of FORMATS) {
+    server.resource(
+      `format-${doc.topic}`,
+      `telegram://format/${doc.topic}`,
+      { description: doc.summary, mimeType: "text/markdown" },
+      async (uri) => ({
+        contents: [{ uri: uri.href, mimeType: "text/markdown", text: doc.body }],
+      })
+    );
+  }
 }
 
 // ─── TRAIL ─────────────────────────────────────────────────────────────

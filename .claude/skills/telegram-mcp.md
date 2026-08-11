@@ -51,6 +51,13 @@ If the user says "send message" without specifying a chat — just send it, the 
 ```
 Supports `HTML`, `Markdown`, `MarkdownV2`. Prefer HTML — it's the least error-prone.
 
+### Don't guess a structured parameter — ask the server
+`telegram_format(topic: "rich_message")` returns the exact syntax, limits and a working example.
+It also covers `caption`, `media`, `reply_markup`, `poll`, `checklist`, `reply_parameters`,
+`link_preview_options`, `suggested_post_parameters`. Accepts a topic, a tool name
+(`send_media_group`), or plain wording (`"long post"`, `"album"`, `"buttons"`, `"длинный пост"`).
+Call it BEFORE building a post, not after Telegram rejects one.
+
 ### Long posts — use `send_rich_message`, not a caption
 A media caption is capped at **1024 characters** by Telegram, and `send_message` at 4096. For an actual post — heading, paragraphs, images, a table — use `send_rich_message`:
 
