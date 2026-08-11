@@ -34,7 +34,7 @@ Pass an OBJECT with **exactly one** of \`markdown\`, \`html\` or \`blocks\`. Any
 }
 \`\`\`
 
-Optional siblings: \`is_rtl\` (bool), \`skip_entity_detection\` (bool — turns off auto-linking of URLs, @mentions, #hashtags, phone numbers), \`media\` (array, only needed when markdown/html reference uploads via \`tg://photo?id=\`).
+Optional siblings: \`is_rtl\` (bool), \`skip_entity_detection\` (bool — turns off auto-linking of URLs, @mentions, #hashtags, phone numbers), \`media\` (array of InputRichMessageMedia — needed when markdown/html reference uploads or file_ids via \`tg://photo?id=\` / \`tg://video?id=\` / \`tg://audio?id=\`; see below).
 
 ## Limits — validated before the request is sent
 | Limit | Value |
@@ -46,14 +46,31 @@ Optional siblings: \`is_rtl\` (bool), \`skip_entity_detection\` (bool — turns 
 | Nesting levels | ${RICH_MESSAGE_LIMITS.nesting} |
 
 ## Media — the rule people get wrong
-Media lives in its **own block**, and the source must be an **HTTP(S) URL**. A \`file_id\` or a local
-file path will NOT work inside markdown/html.
+Media lives in its **own block**. Inline, the source must be an **HTTP(S) URL** — a bare \`file_id\`
+or a local path written straight into the markdown will NOT work.
 
 \`\`\`
 ![](https://host/photo.jpg "Photo caption")
 ![](https://host/video.mp4 "Video caption")
 ![](https://host/audio.mp3 "Audio caption")
 ![](https://host/animation.gif "Animation caption")
+\`\`\`
+
+**Local files and file_ids go through the \`media\` array**, referenced from the text by id.
+The link scheme must match the kind: \`tg://photo?id=\`, \`tg://video?id=\`, \`tg://audio?id=\` —
+pointing a \`tg://photo\` link at a video is rejected with RICH_MESSAGE_PHOTO_INVALID.
+Ids are 1–64 chars of \`A-Z a-z 0-9 _ -\`. Absolute local paths are uploaded as multipart
+(\`attach://\`) by this server; the 50 MB per-file ceiling applies.
+
+\`\`\`json
+{
+  "rich_message": {
+    "markdown": "# Post\\n\\n![](tg://video?id=trailer \\"Caption\\")",
+    "media": [
+      { "id": "trailer", "media": { "type": "video", "media": "C:\\\\clips\\\\trailer.mp4" } }
+    ]
+  }
+}
 \`\`\`
 
 Group several media without tying them to a paragraph:

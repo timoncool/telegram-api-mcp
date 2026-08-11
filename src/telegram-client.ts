@@ -18,6 +18,44 @@ function isHttpUrl(value: unknown): value is string {
   return typeof value === "string" && /^https?:\/\//i.test(value);
 }
 
+/**
+ * Every InputMedia object reachable from a call's params, wherever it hides:
+ * sendMediaGroup's `media` array, editMessageMedia's single `media` object, and the
+ * InputRichMessageMedia entries in `rich_message.media` (each of which wraps its own
+ * InputMedia under `.media`). Returned objects are the live ones, so callers can rewrite
+ * their `media` / `thumbnail` / `cover` fields in place.
+ */
+function inputMediaObjects(params: Record<string, unknown>): Record<string, unknown>[] {
+  const objects: Record<string, unknown>[] = [];
+
+  const push = (value: unknown) => {
+    if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+      objects.push(value as Record<string, unknown>);
+    }
+  };
+
+  if (typeof params.media === "object" && params.media !== null) {
+    const entries = Array.isArray(params.media) ? params.media : [params.media];
+    entries.forEach(push);
+  }
+
+  const rich = params.rich_message;
+  if (typeof rich === "object" && rich !== null) {
+    const entries = (rich as Record<string, unknown>).media;
+    if (Array.isArray(entries)) {
+      for (const entry of entries) {
+        if (typeof entry !== "object" || entry === null) continue;
+        // InputRichMessageMedia = { id, media: InputMedia }; tolerate a bare InputMedia too
+        const inner = (entry as Record<string, unknown>).media;
+        if (typeof inner === "object" && inner !== null) push(inner);
+        else push(entry);
+      }
+    }
+  }
+
+  return objects;
+}
+
 /** Guess a sane filename for a downloaded URL — Telegram infers type from it. */
 function filenameForUrl(url: string, contentType: string | null): string {
   let name = "";
@@ -104,12 +142,15 @@ export class TelegramClient {
   async call(method: string, params: Record<string, unknown> = {}): Promise<unknown> {
     const resolvedParams = this.applyDefaults(params);
 
-    // media may arrive as a JSON string (tool schema is untyped) — parse so attach:// rewriting sees it
-    if (typeof resolvedParams.media === "string") {
-      const trimmed = resolvedParams.media.trim();
+    // media / rich_message may arrive as a JSON string (tool schema is untyped) — parse so
+    // attach:// rewriting sees the InputMedia inside them
+    for (const key of ["media", "rich_message"]) {
+      const value = resolvedParams[key];
+      if (typeof value !== "string") continue;
+      const trimmed = value.trim();
       if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
         try {
-          resolvedParams.media = JSON.parse(trimmed);
+          resolvedParams[key] = JSON.parse(trimmed);
         } catch {
           // leave as-is (could be a bare file_id/URL for editMessageMedia misuse)
         }
@@ -150,16 +191,11 @@ export class TelegramClient {
       }
     }
 
-    if (typeof params.media === "object" && params.media !== null) {
-      const entries = Array.isArray(params.media) ? params.media : [params.media];
-      for (const entry of entries) {
-        if (typeof entry !== "object" || entry === null) continue;
-        const item = entry as Record<string, unknown>;
-        for (const field of ["media", "thumbnail", "cover"]) {
-          const value = item[field];
-          if (isHttpUrl(value)) {
-            found.push({ url: value, setter: (v) => { item[field] = v; } });
-          }
+    for (const item of inputMediaObjects(params)) {
+      for (const field of ["media", "thumbnail", "cover"]) {
+        const value = item[field];
+        if (isHttpUrl(value)) {
+          found.push({ url: value, setter: (v) => { item[field] = v; } });
         }
       }
     }
@@ -308,6 +344,31 @@ export class TelegramClient {
           ? await this.attachInputMediaFiles(value, formData)
           : (await this.attachInputMediaFiles([value], formData))[0];
         formData.append(key, JSON.stringify(rewritten));
+      } else if (key === "rich_message" && typeof value === "object" && value !== null) {
+        // sendRichMessage: the InputMedia sits one level deeper, inside rich_message.media[].media,
+        // and the markdown/html references it as tg://photo|video|audio?id=<id>. Same attach:// trick.
+        const rich = structuredClone(value) as Record<string, unknown>;
+        const entries = rich.media;
+        if (Array.isArray(entries)) {
+          const counter = { n: 0 }; // one namespace for the whole post, or names collide
+          const rewritten: unknown[] = [];
+          for (const entry of entries) {
+            if (typeof entry !== "object" || entry === null) {
+              rewritten.push(entry);
+              continue;
+            }
+            const item = { ...(entry as Record<string, unknown>) };
+            const inner = item.media;
+            if (typeof inner === "object" && inner !== null) {
+              item.media = (await this.attachInputMediaFiles([inner], formData, counter))[0];
+              rewritten.push(item);
+            } else {
+              rewritten.push((await this.attachInputMediaFiles([item], formData, counter))[0]);
+            }
+          }
+          rich.media = rewritten;
+        }
+        formData.append(key, JSON.stringify(rich));
       } else if (typeof value === "object") {
         formData.append(key, JSON.stringify(value));
       } else {
@@ -359,9 +420,9 @@ export class TelegramClient {
   /** Rewrite local file paths inside InputMedia[] to attach://<name>, appending the files to the form. */
   private async attachInputMediaFiles(
     media: unknown[],
-    formData: FormData
+    formData: FormData,
+    counter: { n: number } = { n: 0 }
   ): Promise<unknown[]> {
-    let counter = 0;
     const result: unknown[] = [];
 
     for (const entry of media) {
@@ -373,7 +434,7 @@ export class TelegramClient {
       for (const field of ["media", "thumbnail", "cover"]) {
         const val = item[field];
         if (typeof val === "string" && (await this.isLocalFile(val))) {
-          const name = `file${counter++}`;
+          const name = `file${counter.n++}`;
           formData.append(name, await this.readLocalFile(val), basename(val));
           item[field] = `attach://${name}`;
         }
@@ -393,15 +454,11 @@ export class TelegramClient {
       }
     }
 
-    // InputMedia (sendMediaGroup: array / editMessageMedia: object): paths live in media[].media / media[].thumbnail
-    if (typeof params.media === "object" && params.media !== null) {
-      const entries = Array.isArray(params.media) ? params.media : [params.media];
-      for (const entry of entries) {
-        if (typeof entry !== "object" || entry === null) continue;
-        const item = entry as Record<string, unknown>;
-        for (const field of ["media", "thumbnail", "cover"]) {
-          if (typeof item[field] === "string" && isAbsolute(item[field] as string)) return true;
-        }
+    // InputMedia paths live in media[].media / media[].thumbnail — for sendMediaGroup,
+    // editMessageMedia and the rich_message.media entries alike
+    for (const item of inputMediaObjects(params)) {
+      for (const field of ["media", "thumbnail", "cover"]) {
+        if (typeof item[field] === "string" && isAbsolute(item[field] as string)) return true;
       }
     }
 

@@ -213,6 +213,64 @@ describe("TelegramClient", () => {
     await rm(dir, { recursive: true, force: true });
   });
 
+  it("uploads local files inside rich_message.media via attach://", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "tg-rich-"));
+    const clip = join(dir, "trailer.mp4");
+    const cover = join(dir, "cover.jpg");
+    await writeFile(clip, Buffer.from([0x00, 0x00, 0x00, 0x18]));
+    await writeFile(cover, Buffer.from([0xff, 0xd8, 0xff]));
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve({ ok: true, result: {} }),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    await client.call("sendRichMessage", {
+      chat_id: 1,
+      rich_message: {
+        markdown: "# Post\n\n![](tg://video?id=trailer \"Caption\")",
+        media: [{ id: "trailer", media: { type: "video", media: clip, cover } }],
+      },
+    });
+
+    const form = mockFetch.mock.calls[0][1].body as FormData;
+    const rich = JSON.parse(form.get("rich_message") as string);
+    expect(rich.media[0].id).toBe("trailer");
+    expect(rich.media[0].media.media).toBe("attach://file0");
+    expect(rich.media[0].media.cover).toBe("attach://file1");
+    expect(form.get("file0")).toBeInstanceOf(Blob);
+    expect(form.get("file1")).toBeInstanceOf(Blob);
+
+    vi.unstubAllGlobals();
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("accepts rich_message passed as a JSON string", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "tg-rich-str-"));
+    const clip = join(dir, "clip.mp4");
+    await writeFile(clip, Buffer.from([0x00, 0x00, 0x00, 0x18]));
+
+    const mockFetch = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve({ ok: true, result: {} }),
+    });
+    vi.stubGlobal("fetch", mockFetch);
+
+    await client.call("sendRichMessage", {
+      chat_id: 1,
+      rich_message: JSON.stringify({
+        markdown: "![](tg://video?id=v0)",
+        media: [{ id: "v0", media: { type: "video", media: clip } }],
+      }),
+    });
+
+    const form = mockFetch.mock.calls[0][1].body as FormData;
+    const rich = JSON.parse(form.get("rich_message") as string);
+    expect(rich.media[0].media.media).toBe("attach://file0");
+
+    vi.unstubAllGlobals();
+    await rm(dir, { recursive: true, force: true });
+  });
+
   it("accepts media passed as a JSON string", async () => {
     const mockFetch = vi.fn().mockResolvedValue({
       json: () => Promise.resolve({ ok: true, result: [] }),

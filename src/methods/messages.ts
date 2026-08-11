@@ -39,7 +39,7 @@ export const messageMethods: MethodDef[] = [
       `exceeds the 1024-character caption limit. Call telegram_format with topic "rich_message" for the exact syntax before building the post.`,
     category: "messages",
     needsChatId: true,
-    canUploadFiles: false,
+    canUploadFiles: true,
     returns: "Message",
     params: [
       { name: "chat_id", type: ChatId, required: true, description: "Target chat ID or @username" },
