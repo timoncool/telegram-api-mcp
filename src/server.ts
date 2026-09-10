@@ -5,7 +5,7 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { Config } from "./config.js";
 import { TelegramClient, TelegramApiError } from "./telegram-client.js";
-import { MethodDef, buildZodSchema } from "./method-registry.js";
+import { MethodDef, buildZodSchema, buildJsonSchema } from "./method-registry.js";
 import { allMethods, searchMethods, findMethodByApiName } from "./methods/index.js";
 import { CircuitOpenError } from "./circuit-breaker.js";
 import { FORMATS, findFormat, formatIndex } from "./formats.js";
@@ -26,16 +26,12 @@ function getSchema(method: MethodDef): ReturnType<typeof buildZodSchema> {
   return schema;
 }
 
-export async function startServer(config: Config): Promise<void> {
-  const client = new TelegramClient(config);
-
+/** Build a server without opening a transport; callers own the client's lifetime. */
+export function createServer(config: Config, client: TelegramClient): McpServer {
   const server = new McpServer({
     name: "telegram-api-mcp",
-    version: "0.1.0",
+    version: "0.2.0",
   });
-
-  // Log before connect (connect blocks on stdio transport)
-  log("info", `Starting server in ${config.metaMode ? "meta" : "standard"} mode with ${allMethods.length} methods`);
 
   if (config.metaMode) {
     registerMetaTools(server, client);
@@ -46,6 +42,14 @@ export async function startServer(config: Config): Promise<void> {
   registerFormatTool(server);
   trailInstance = registerTrailTools(server);
   registerDownloadTool(server, client);
+
+  return server;
+}
+
+export async function startServer(config: Config): Promise<void> {
+  const client = new TelegramClient(config);
+  const server = createServer(config, client);
+  log("info", `Starting server in ${config.metaMode ? "meta" : "standard"} mode with ${allMethods.length} methods`);
 
   const shutdown = () => {
     client.destroy();
@@ -66,11 +70,9 @@ function registerAllTools(server: McpServer, client: TelegramClient): void {
 
     const annotations = method.annotations || { destructiveHint: false };
 
-    server.tool(
+    server.registerTool(
       method.toolName,
-      method.description,
-      zodSchema.shape,
-      annotations,
+      { description: method.description, inputSchema: zodSchema, annotations },
       async (params) => {
         return callTelegram(client, method, params as Record<string, unknown>);
       }
@@ -86,6 +88,7 @@ function registerMetaTools(server: McpServer, client: TelegramClient): void {
     "Search Telegram Bot API methods by keyword. Returns matching methods with their parameters. Use this to discover available methods before calling them.",
     {
       query: z.string().optional().describe("Search keyword (e.g. 'send photo', 'ban', 'poll', 'sticker')"),
+      offset: z.number().int().nonnegative().optional().describe("Skip this many results; default 0"),
       category: z.string().optional().describe("Filter by category: messages, media, polls, chat, members, invite, forum, stickers, inline, payments, business, stories, gifts, games, bot, updates, editing, forwarding, managed_bots, passport, other"),
     },
     async (params) => {
@@ -99,17 +102,19 @@ function registerMetaTools(server: McpServer, client: TelegramClient): void {
         return { content: [{ type: "text" as const, text: "No methods found. Try a different keyword." }] };
       }
 
+      const offset = params.offset ?? 0;
       const text = results
-        .slice(0, 20)
+        .slice(offset, offset + 20)
         .map((m) => {
           const required = m.params.filter((p) => p.required).map((p) => p.name);
-          const optional = m.params.filter((p) => !p.required).map((p) => p.name).slice(0, 5);
+          const optional = m.params.filter((p) => !p.required).map((p) => p.name);
           return [
             `**${m.apiMethod}** (tool: ${m.toolName}) [${m.category}]`,
             `  ${m.description}`,
             `  Required: ${required.join(", ") || "none"}`,
-            `  Optional: ${optional.join(", ")}${m.params.filter((p) => !p.required).length > 5 ? " ..." : ""}`,
+            `  Optional: ${optional.join(", ")}`,
             `  Returns: ${m.returns}`,
+            ...(results.length === 1 ? [`  Input schema: ${JSON.stringify(buildJsonSchema(m.params))}`] : []),
           ].join("\n");
         })
         .join("\n\n");
@@ -117,7 +122,7 @@ function registerMetaTools(server: McpServer, client: TelegramClient): void {
       return {
         content: [{
           type: "text" as const,
-          text: `Found ${results.length} method(s):\n\n${text}${results.length > 20 ? `\n\n... and ${results.length - 20} more. Narrow your search.` : ""}`,
+          text: `Found ${results.length} method(s):\n\n${text}${results.length > offset + 20 ? `\n\nMore results: call telegram_find with offset ${offset + 20} and the same filters.` : ""}`,
         }],
       };
     }
@@ -389,7 +394,7 @@ async function callTelegram(
       }
     }
 
-    const text = formatResult(method.apiMethod, result);
+    const text = formatResult(method.apiMethod, result, client.maxResponseLength);
     return { content: [{ type: "text", text }] };
   } catch (error) {
     const message = error instanceof CircuitOpenError
@@ -405,9 +410,7 @@ async function callTelegram(
   }
 }
 
-const MAX_RESPONSE_LENGTH = 100_000;
-
-function formatResult(method: string, result: unknown): string {
+function formatResult(method: string, result: unknown, maxLength: number): string {
   if (result === true) return `${method}: Success`;
 
   let text: string;
@@ -417,9 +420,9 @@ function formatResult(method: string, result: unknown): string {
     text = String(result);
   }
 
-  // Truncate to prevent filling context window
-  if (text.length > MAX_RESPONSE_LENGTH) {
-    text = text.slice(0, MAX_RESPONSE_LENGTH) + `\n\n... [truncated, ${text.length} chars total]`;
+  // Return the complete result unless the operator explicitly opts into truncation.
+  if (maxLength > 0 && text.length > maxLength) {
+    text = text.slice(0, maxLength) + `\n\n... [truncated, ${text.length} chars total]`;
   }
 
   return text;

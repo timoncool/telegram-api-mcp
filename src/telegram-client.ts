@@ -1,6 +1,7 @@
-import { readFile, writeFile, stat, mkdir, unlink } from "node:fs/promises";
+import { readFile, writeFile, stat, mkdir, mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, dirname, extname, isAbsolute, join, resolve, normalize, sep } from "node:path";
+import { collectFileReferences } from "./file-uploads.js";
 import { Config } from "./config.js";
 import { RateLimiter } from "./rate-limiter.js";
 import { CircuitBreaker, CircuitOpenError } from "./circuit-breaker.js";
@@ -8,52 +9,8 @@ import { CircuitBreaker, CircuitOpenError } from "./circuit-breaker.js";
 /** Default fetch timeout: 60 seconds */
 const FETCH_TIMEOUT_MS = 60_000;
 
-/** Parameters that carry a file: a file_id, an HTTP URL, or a local path. */
-const FILE_FIELDS = [
-  "photo", "audio", "document", "video", "animation", "voice",
-  "video_note", "sticker", "thumbnail", "certificate", "cover", "live_photo",
-] as const;
-
 function isHttpUrl(value: unknown): value is string {
   return typeof value === "string" && /^https?:\/\//i.test(value);
-}
-
-/**
- * Every InputMedia object reachable from a call's params, wherever it hides:
- * sendMediaGroup's `media` array, editMessageMedia's single `media` object, and the
- * InputRichMessageMedia entries in `rich_message.media` (each of which wraps its own
- * InputMedia under `.media`). Returned objects are the live ones, so callers can rewrite
- * their `media` / `thumbnail` / `cover` fields in place.
- */
-function inputMediaObjects(params: Record<string, unknown>): Record<string, unknown>[] {
-  const objects: Record<string, unknown>[] = [];
-
-  const push = (value: unknown) => {
-    if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-      objects.push(value as Record<string, unknown>);
-    }
-  };
-
-  if (typeof params.media === "object" && params.media !== null) {
-    const entries = Array.isArray(params.media) ? params.media : [params.media];
-    entries.forEach(push);
-  }
-
-  const rich = params.rich_message;
-  if (typeof rich === "object" && rich !== null) {
-    const entries = (rich as Record<string, unknown>).media;
-    if (Array.isArray(entries)) {
-      for (const entry of entries) {
-        if (typeof entry !== "object" || entry === null) continue;
-        // InputRichMessageMedia = { id, media: InputMedia }; tolerate a bare InputMedia too
-        const inner = (entry as Record<string, unknown>).media;
-        if (typeof inner === "object" && inner !== null) push(inner);
-        else push(entry);
-      }
-    }
-  }
-
-  return objects;
 }
 
 /** Guess a sane filename for a downloaded URL — Telegram infers type from it. */
@@ -139,23 +96,14 @@ export class TelegramClient {
     clearInterval(this.cleanupInterval);
   }
 
+  get maxResponseLength(): number {
+    return this.config.maxResponseLength ?? 0;
+  }
+
   async call(method: string, params: Record<string, unknown> = {}): Promise<unknown> {
     const resolvedParams = this.applyDefaults(params);
 
-    // media / rich_message may arrive as a JSON string (tool schema is untyped) — parse so
-    // attach:// rewriting sees the InputMedia inside them
-    for (const key of ["media", "rich_message"]) {
-      const value = resolvedParams[key];
-      if (typeof value !== "string") continue;
-      const trimmed = value.trim();
-      if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
-        try {
-          resolvedParams[key] = JSON.parse(trimmed);
-        } catch {
-          // leave as-is (could be a bare file_id/URL for editMessageMedia misuse)
-        }
-      }
-    }
+    collectFileReferences(method, resolvedParams); // Normalize JSON-encoded upload containers.
 
     const chatId = resolvedParams.chat_id as string | undefined;
 
@@ -168,86 +116,53 @@ export class TelegramClient {
     // accepts PDF and ZIP), so videos and large images failed. Uploading the bytes lifts
     // that to 10 MB / 50 MB and behaves the same for every link — one path, no retry
     // dance, and a precise error when a link genuinely cannot be used.
-    if (this.collectRemoteUrls(resolvedParams).length > 0) {
-      const mirrored = await this.mirrorRemoteFiles(resolvedParams);
+    if (this.collectRemoteUrls(method, resolvedParams).length > 0) {
+      const mirrored = await this.mirrorRemoteFiles(method, resolvedParams);
       try {
         return await this.callWithRetry(method, mirrored.params, true);
       } finally {
-        await Promise.all(mirrored.tempFiles.map((f) => unlink(f).catch(() => undefined)));
+        await rm(mirrored.directory, { recursive: true, force: true });
       }
     }
 
-    return this.callWithRetry(method, resolvedParams, this.hasFileParams(resolvedParams));
+    return this.callWithRetry(method, resolvedParams, collectFileReferences(method, resolvedParams).some((f) => isAbsolute(f.value)));
   }
 
-  /** Every http(s) URL sitting in a file field, including inside InputMedia. */
-  private collectRemoteUrls(params: Record<string, unknown>): { setter: (v: string) => void; url: string }[] {
-    const found: { setter: (v: string) => void; url: string }[] = [];
+  private collectRemoteUrls(method: string, params: Record<string, unknown>) {
+    return collectFileReferences(method, params).filter((ref) => isHttpUrl(ref.value));
+  }
 
-    for (const field of FILE_FIELDS) {
-      const value = params[field];
-      if (isHttpUrl(value)) {
-        found.push({ url: value, setter: (v) => { params[field] = v; } });
-      }
-    }
-
-    for (const item of inputMediaObjects(params)) {
-      for (const field of ["media", "thumbnail", "cover"]) {
-        const value = item[field];
-        if (isHttpUrl(value)) {
-          found.push({ url: value, setter: (v) => { item[field] = v; } });
+  /** Each call owns a separate directory, including when download or upload fails. */
+  private async mirrorRemoteFiles(method: string, params: Record<string, unknown>): Promise<{
+    params: Record<string, unknown>; directory: string;
+  }> {
+    const copy = structuredClone(params);
+    const targets = this.collectRemoteUrls(method, copy);
+    await mkdir(this.mirrorDir, { recursive: true });
+    const directory = await mkdtemp(join(this.mirrorDir, "upload-"));
+    try {
+      for (const [index, target] of targets.entries()) {
+        const response = await fetch(target.value, { redirect: "follow", signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+        if (!response.ok) {
+          throw new TelegramApiError(`Could not download ${target.value} — HTTP ${response.status}. The link must point directly to a file.`, response.status);
         }
+        const bytes = Buffer.from(await response.arrayBuffer());
+        if (bytes.byteLength > this.config.maxFileSize) {
+          throw new TelegramApiError(`${target.value} is ${(bytes.byteLength / 1048576).toFixed(1)} MB — Telegram accepts at most ${Math.round(this.config.maxFileSize / 1048576)} MB per configured upload.`, 413);
+        }
+        const filePath = join(directory, `${index}-${filenameForUrl(target.value, response.headers.get("content-type"))}`);
+        await writeFile(filePath, bytes);
+        target.set(filePath);
       }
+      return { params: copy, directory };
+    } catch (error) {
+      await rm(directory, { recursive: true, force: true });
+      throw error;
     }
-
-    return found;
-  }
-
-  /** Download every remote file field to a temp file and swap the URLs for local paths. */
-  private async mirrorRemoteFiles(
-    params: Record<string, unknown>
-  ): Promise<{ params: Record<string, unknown>; tempFiles: string[] }> {
-    const copy = structuredClone(params) as Record<string, unknown>;
-    const targets = this.collectRemoteUrls(copy);
-    const dir = this.mirrorDir;
-    await mkdir(dir, { recursive: true });
-
-    const tempFiles: string[] = [];
-    for (const [index, target] of targets.entries()) {
-      let response: Response;
-      try {
-        response = await fetch(target.url, { redirect: "follow" });
-      } catch (error) {
-        throw new TelegramApiError(
-          `Could not download ${target.url}: ${(error as Error).message}. The link must be directly reachable from this machine.`,
-          0
-        );
-      }
-      if (!response.ok) {
-        throw new TelegramApiError(
-          `Could not download ${target.url} — HTTP ${response.status}. The link must point straight at the file, with no login or hotlink protection.`,
-          response.status
-        );
-      }
-      const bytes = Buffer.from(await response.arrayBuffer());
-      if (bytes.byteLength > this.config.maxFileSize) {
-        throw new TelegramApiError(
-          `${target.url} is ${(bytes.byteLength / 1048576).toFixed(1)} MB — Telegram accepts at most ` +
-            `${Math.round(this.config.maxFileSize / 1048576)} MB per upload. Send a smaller file or a shorter clip.`,
-          413
-        );
-      }
-      const filePath = join(dir, `${index}-${filenameForUrl(target.url, response.headers.get("content-type"))}`);
-      await writeFile(filePath, bytes);
-      tempFiles.push(filePath);
-      target.setter(filePath);
-    }
-
-    return { params: copy, tempFiles };
   }
 
   private applyDefaults(params: Record<string, unknown>): Record<string, unknown> {
-    const result = { ...params };
+    const result = structuredClone(params);
     if (!result.chat_id && this.config.defaultChatId) {
       result.chat_id = this.config.defaultChatId;
     }
@@ -332,48 +247,24 @@ export class TelegramClient {
     const url = `${this.baseUrl}/${method}`;
     const formData = new FormData();
 
-    for (const [key, value] of Object.entries(params)) {
-      if (value === undefined || value === null) continue;
-
-      if (typeof value === "string" && (await this.isLocalFile(value))) {
-        const file = await this.readLocalFile(value);
-        formData.append(key, file, basename(value));
-      } else if (key === "media" && typeof value === "object") {
-        // sendMediaGroup (array) / editMessageMedia (object): local paths inside InputMedia go via attach://
-        const rewritten = Array.isArray(value)
-          ? await this.attachInputMediaFiles(value, formData)
-          : (await this.attachInputMediaFiles([value], formData))[0];
-        formData.append(key, JSON.stringify(rewritten));
-      } else if (key === "rich_message" && typeof value === "object" && value !== null) {
-        // sendRichMessage: the InputMedia sits one level deeper, inside rich_message.media[].media,
-        // and the markdown/html references it as tg://photo|video|audio?id=<id>. Same attach:// trick.
-        const rich = structuredClone(value) as Record<string, unknown>;
-        const entries = rich.media;
-        if (Array.isArray(entries)) {
-          const counter = { n: 0 }; // one namespace for the whole post, or names collide
-          const rewritten: unknown[] = [];
-          for (const entry of entries) {
-            if (typeof entry !== "object" || entry === null) {
-              rewritten.push(entry);
-              continue;
-            }
-            const item = { ...(entry as Record<string, unknown>) };
-            const inner = item.media;
-            if (typeof inner === "object" && inner !== null) {
-              item.media = (await this.attachInputMediaFiles([inner], formData, counter))[0];
-              rewritten.push(item);
-            } else {
-              rewritten.push((await this.attachInputMediaFiles([item], formData, counter))[0]);
-            }
-          }
-          rich.media = rewritten;
-        }
-        formData.append(key, JSON.stringify(rich));
-      } else if (typeof value === "object") {
-        formData.append(key, JSON.stringify(value));
-      } else {
-        formData.append(key, String(value));
+    const rewritten = structuredClone(params);
+    const directFiles = new Set<string>();
+    let index = 0;
+    for (const ref of collectFileReferences(method, rewritten)) {
+      if (!isAbsolute(ref.value)) continue;
+      const filePath = ref.value;
+      const direct = ref.path.length === 1;
+      let name = String(ref.path[0]);
+      if (!direct) {
+        do { name = `file${index++}`; } while (Object.hasOwn(rewritten, name) || formData.has(name));
       }
+      formData.append(name, await this.readLocalFile(filePath), basename(filePath));
+      if (direct) directFiles.add(name);
+      else ref.set(`attach://${name}`);
+    }
+    for (const [key, value] of Object.entries(rewritten)) {
+      if (value === undefined || value === null || directFiles.has(key)) continue;
+      formData.append(key, typeof value === "object" ? JSON.stringify(value) : String(value));
     }
 
     const controller = new AbortController();
@@ -415,64 +306,6 @@ export class TelegramClient {
     }
 
     return data.result;
-  }
-
-  /** Rewrite local file paths inside InputMedia[] to attach://<name>, appending the files to the form. */
-  private async attachInputMediaFiles(
-    media: unknown[],
-    formData: FormData,
-    counter: { n: number } = { n: 0 }
-  ): Promise<unknown[]> {
-    const result: unknown[] = [];
-
-    for (const entry of media) {
-      if (typeof entry !== "object" || entry === null) {
-        result.push(entry);
-        continue;
-      }
-      const item = { ...(entry as Record<string, unknown>) };
-      for (const field of ["media", "thumbnail", "cover"]) {
-        const val = item[field];
-        if (typeof val === "string" && (await this.isLocalFile(val))) {
-          const name = `file${counter.n++}`;
-          formData.append(name, await this.readLocalFile(val), basename(val));
-          item[field] = `attach://${name}`;
-        }
-      }
-      result.push(item);
-    }
-
-    return result;
-  }
-
-  private hasFileParams(params: Record<string, unknown>): boolean {
-    const fileFields = new Set<string>(FILE_FIELDS);
-
-    for (const [key, value] of Object.entries(params)) {
-      if (fileFields.has(key) && typeof value === "string") {
-        if (isAbsolute(value)) return true;
-      }
-    }
-
-    // InputMedia paths live in media[].media / media[].thumbnail — for sendMediaGroup,
-    // editMessageMedia and the rich_message.media entries alike
-    for (const item of inputMediaObjects(params)) {
-      for (const field of ["media", "thumbnail", "cover"]) {
-        if (typeof item[field] === "string" && isAbsolute(item[field] as string)) return true;
-      }
-    }
-
-    return false;
-  }
-
-  private async isLocalFile(value: string): Promise<boolean> {
-    if (!isAbsolute(value)) return false;
-    try {
-      const info = await stat(value);
-      return info.isFile();
-    } catch {
-      return false;
-    }
   }
 
   private async readLocalFile(filePath: string): Promise<Blob> {
