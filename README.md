@@ -2,12 +2,12 @@
 
 # telegram-api-mcp
 
-**Ultimate MCP server for Telegram Bot API — 185 methods, full v10.2 coverage, rich messages, meta-mode, rate limiting, circuit breaker.**
+**Ultimate MCP server for Telegram Bot API — 185 methods, v10.3 parameter coverage, rich messages, meta-mode, rate limiting, circuit breaker.**
 
 [![Stars](https://img.shields.io/github/stars/timoncool/telegram-api-mcp?style=flat-square)](https://github.com/timoncool/telegram-api-mcp/stargazers)
 [![npm](https://img.shields.io/npm/v/telegram-api-mcp?style=flat-square)](https://www.npmjs.com/package/telegram-api-mcp)
 [![License](https://img.shields.io/github/license/timoncool/telegram-api-mcp?style=flat-square)](LICENSE)
-[![Bot API](https://img.shields.io/badge/Telegram%20Bot%20API-10.2-26A5E4?style=flat-square&logo=telegram)](https://core.telegram.org/bots/api)
+[![Bot API](https://img.shields.io/badge/Telegram%20Bot%20API-10.3-26A5E4?style=flat-square&logo=telegram)](https://core.telegram.org/bots/api)
 [![TRAIL](https://img.shields.io/badge/TRAIL-v2.1-6366f1?style=flat-square)](https://github.com/timoncool/trail-spec)
 
 </div>
@@ -18,18 +18,18 @@
 
 - **185/185 Bot API methods** — messages, media, polls, chats, forums, stickers, payments, business, stories, gifts, games, inline, managed bots
 - **Rich messages** — post up to 32768 characters with headings, tables, lists, collages, slideshows, footnotes and up to 50 inline media, instead of the 1024-character caption ceiling
-- **Bot API 10.2** (July 2026) — rich messages, ephemeral messages, live photos, guest mode, join-request queries, poll media
+- **Bot API 10.3** (August 2026) — rich messages, ephemeral messages, live photos, guest mode, join-request queries, poll media
 - **`telegram_format` tool** — the server explains the exact shape of `rich_message`, `media`, `reply_markup`, `poll` and more *before* you send, so an agent never has to guess the syntax (also exposed as MCP resources under `telegram://format/…`)
-- **Meta-mode** — 2 tools instead of 185, saves ~99% context tokens
+- **Meta-mode** — 2 API meta-tools plus shared helpers, reduces API tool definitions
 - **Rate limiting** — global (30 req/sec) + per-chat (20 msg/min), token bucket with async mutex
 - **Circuit breaker** — 3-state (closed/open/half-open), auto-recovery
 - **Retry with backoff** — respects Telegram 429 `retry_after`, exponential backoff on 5xx
-- **Zod validation** — every parameter validated before hitting Telegram API
+- **Zod validation** — required fields and declared parameter types are checked; complex Telegram objects also undergo server-side validation
 - **Token masking** — bot token never appears in responses, logs, or error messages
 - **File upload security** — path traversal protection, configurable allowed directories
 - **Tool annotations** — all 185 methods annotated (readOnly, destructive, idempotent, openWorld)
 - **Docs mirror + audit** — `npm run docs:refresh` re-downloads the official spec, `npm run audit` fails if any method or parameter drifts from it
-- **Response truncation** — 100K char limit to prevent context overflow
+- **Complete responses** — API results are returned in full by default; optional `TELEGRAM_MAX_RESPONSE_LENGTH` enables explicit truncation
 - **Zero bloat** — only 2 dependencies: `@modelcontextprotocol/sdk` + `zod`
 
 ## Quick Start
@@ -106,16 +106,17 @@ TELEGRAM_BOT_TOKEN=your_token node dist/index.js
 | `TELEGRAM_CB_THRESHOLD` | No | `5` | Failures before circuit opens |
 | `TELEGRAM_CB_COOLDOWN` | No | `30000` | Circuit breaker cooldown (ms) |
 | `TELEGRAM_ALLOWED_UPLOAD_DIRS` | No | — | Comma-separated allowed upload paths |
+| `TELEGRAM_MAX_RESPONSE_LENGTH` | No | `0` | Response text limit; 0 returns the complete result |
 | `TELEGRAM_MAX_FILE_SIZE` | No | `52428800` | Max upload file size (50MB) |
 
 ## Meta Mode
 
-When `TELEGRAM_META_MODE=true`, the server exposes only 2 tools instead of 185:
+When `TELEGRAM_META_MODE=true`, the server exposes only 2 API meta-tools plus shared helpers:
 
 - **`telegram_find`** — search methods by keyword or category
 - **`telegram_call`** — call any method by name with JSON params
 
-This saves ~99% of context tokens while keeping full API access:
+This reduces the API tool list while retaining access to the registered methods:
 
 ```
 User: "Post a poll in my channel"
@@ -125,7 +126,7 @@ AI: → telegram_call(method: "sendPoll", params: { chat_id: ..., question: "...
 
 ## API Coverage
 
-185/185 methods — **100% Bot API 10.2** (July 2026)
+185/185 method names and all 932 parameter entries — Bot API 10.3 (August 2026); see [verification scope](COVERAGE.md).
 
 | Category | Count | Key methods |
 |----------|:---:|-------------|
@@ -242,7 +243,7 @@ scripts/
 - **Token bucket rate limiting** — no race conditions (async mutex). Defaults match [Telegram's official limits](https://core.telegram.org/bots/faq#my-bot-is-hitting-limits): 30 req/sec global, 20 msg/min per group.
 - **Circuit breaker** — 429 (rate limit) is NOT counted as failure. Only real errors (5xx, network) trip the breaker. Half-open probe recovers automatically.
 - **Tool annotations** — every method has MCP annotations (readOnlyHint, destructiveHint, idempotentHint, openWorldHint) so AI clients know which tools are safe to auto-approve.
-- **Response truncation** — responses capped at 100K chars to prevent context window overflow.
+- **Complete responses** — results are returned in full; truncation is optional via `TELEGRAM_MAX_RESPONSE_LENGTH`.
 
 ## Security
 
@@ -265,6 +266,7 @@ npm run test:watch    # Watch mode
 npm run lint          # ESLint
 npm run docs:refresh  # Re-download the official Bot API docs into docs/
 npm run audit         # Diff the registry against the docs mirror
+npm run audit:live    # Check against the current official Telegram specification
 ```
 
 ## Other Projects by [@timoncool](https://github.com/timoncool)
