@@ -18,8 +18,8 @@ import { passportMethods } from "./passport.js";
 import { otherMethods } from "./other.js";
 
 /**
- * Complete registry of ALL Telegram Bot API 9.6 methods.
- * Each method is defined declaratively �� no handler code, just data.
+ * Complete registry of ALL Telegram Bot API 10.3 methods.
+ * Each method is defined declaratively — no handler code, just data.
  */
 export const allMethods: MethodDef[] = [
   ...messageMethods,

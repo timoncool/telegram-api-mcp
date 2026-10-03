@@ -130,16 +130,10 @@
     "description": "Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat"
    },
    {
-    "name": "receiver_user_id",
-    "type": "Integer",
+    "name": "ephemeral_message_parameters",
+    "type": "EphemeralMessageParameters",
     "required": false,
-    "description": "For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See ephemeral message sending for more details."
-   },
-   {
-    "name": "callback_query_id",
-    "type": "String",
-    "required": false,
-    "description": "For outgoing ephemeral messages, identifier of the callback query which triggered the message if any"
+    "description": "A JSON-serialized object containing the parameters of the ephemeral message to send"
    },
    {
     "name": "text",
@@ -509,16 +503,10 @@
     "description": "Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat"
    },
    {
-    "name": "receiver_user_id",
-    "type": "Integer",
+    "name": "ephemeral_message_parameters",
+    "type": "EphemeralMessageParameters",
     "required": false,
-    "description": "For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See ephemeral message sending for more details."
-   },
-   {
-    "name": "callback_query_id",
-    "type": "String",
-    "required": false,
-    "description": "For outgoing ephemeral messages, identifier of the callback query which triggered the message if any"
+    "description": "A JSON-serialized object containing the parameters of the ephemeral message to send"
    },
    {
     "name": "photo",
@@ -628,16 +616,10 @@
     "description": "Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat"
    },
    {
-    "name": "receiver_user_id",
-    "type": "Integer",
+    "name": "ephemeral_message_parameters",
+    "type": "EphemeralMessageParameters",
     "required": false,
-    "description": "For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See ephemeral message sending for more details."
-   },
-   {
-    "name": "callback_query_id",
-    "type": "String",
-    "required": false,
-    "description": "For outgoing ephemeral messages, identifier of the callback query which triggered the message if any"
+    "description": "A JSON-serialized object containing the parameters of the ephemeral message to send"
    },
    {
     "name": "live_photo",
@@ -753,16 +735,10 @@
     "description": "Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat"
    },
    {
-    "name": "receiver_user_id",
-    "type": "Integer",
+    "name": "ephemeral_message_parameters",
+    "type": "EphemeralMessageParameters",
     "required": false,
-    "description": "For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See ephemeral message sending for more details."
-   },
-   {
-    "name": "callback_query_id",
-    "type": "String",
-    "required": false,
-    "description": "For outgoing ephemeral messages, identifier of the callback query which triggered the message if any"
+    "description": "A JSON-serialized object containing the parameters of the ephemeral message to send"
    },
    {
     "name": "audio",
@@ -884,16 +860,10 @@
     "description": "Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat"
    },
    {
-    "name": "receiver_user_id",
-    "type": "Integer",
+    "name": "ephemeral_message_parameters",
+    "type": "EphemeralMessageParameters",
     "required": false,
-    "description": "For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See ephemeral message sending for more details."
-   },
-   {
-    "name": "callback_query_id",
-    "type": "String",
-    "required": false,
-    "description": "For outgoing ephemeral messages, identifier of the callback query which triggered the message if any"
+    "description": "A JSON-serialized object containing the parameters of the ephemeral message to send"
    },
    {
     "name": "document",
@@ -1003,16 +973,10 @@
     "description": "Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat"
    },
    {
-    "name": "receiver_user_id",
-    "type": "Integer",
+    "name": "ephemeral_message_parameters",
+    "type": "EphemeralMessageParameters",
     "required": false,
-    "description": "For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See ephemeral message sending for more details."
-   },
-   {
-    "name": "callback_query_id",
-    "type": "String",
-    "required": false,
-    "description": "For outgoing ephemeral messages, identifier of the callback query which triggered the message if any"
+    "description": "A JSON-serialized object containing the parameters of the ephemeral message to send"
    },
    {
     "name": "video",
@@ -1164,16 +1128,10 @@
     "description": "Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat"
    },
    {
-    "name": "receiver_user_id",
-    "type": "Integer",
+    "name": "ephemeral_message_parameters",
+    "type": "EphemeralMessageParameters",
     "required": false,
-    "description": "For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See ephemeral message sending for more details."
-   },
-   {
-    "name": "callback_query_id",
-    "type": "String",
-    "required": false,
-    "description": "For outgoing ephemeral messages, identifier of the callback query which triggered the message if any"
+    "description": "A JSON-serialized object containing the parameters of the ephemeral message to send"
    },
    {
     "name": "animation",
@@ -1307,16 +1265,10 @@
     "description": "Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat"
    },
    {
-    "name": "receiver_user_id",
-    "type": "Integer",
+    "name": "ephemeral_message_parameters",
+    "type": "EphemeralMessageParameters",
     "required": false,
-    "description": "For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See ephemeral message sending for more details."
-   },
-   {
-    "name": "callback_query_id",
-    "type": "String",
-    "required": false,
-    "description": "For outgoing ephemeral messages, identifier of the callback query which triggered the message if any"
+    "description": "A JSON-serialized object containing the parameters of the ephemeral message to send"
    },
    {
     "name": "voice",
@@ -1393,7 +1345,7 @@
   ]
  },
  "sendVideoNote": {
-  "description": "As of v.4.0, Telegram clients support rounded square MPEG4 videos of up to 1 minute long. Use this method to send video messages. On success, the sent Message is returned.",
+  "description": "Use this method to send a rounded square MPEG4 video of up to 1 minute long. On success, the sent Message is returned.",
   "params": [
    {
     "name": "business_connection_id",
@@ -1420,16 +1372,10 @@
     "description": "Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat"
    },
    {
-    "name": "receiver_user_id",
-    "type": "Integer",
+    "name": "ephemeral_message_parameters",
+    "type": "EphemeralMessageParameters",
     "required": false,
-    "description": "For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See ephemeral message sending for more details."
-   },
-   {
-    "name": "callback_query_id",
-    "type": "String",
-    "required": false,
-    "description": "For outgoing ephemeral messages, identifier of the callback query which triggered the message if any"
+    "description": "A JSON-serialized object containing the parameters of the ephemeral message to send"
    },
    {
     "name": "video_note",
@@ -1699,16 +1645,10 @@
     "description": "Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat"
    },
    {
-    "name": "receiver_user_id",
-    "type": "Integer",
+    "name": "ephemeral_message_parameters",
+    "type": "EphemeralMessageParameters",
     "required": false,
-    "description": "For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See ephemeral message sending for more details."
-   },
-   {
-    "name": "callback_query_id",
-    "type": "String",
-    "required": false,
-    "description": "For outgoing ephemeral messages, identifier of the callback query which triggered the message if any"
+    "description": "A JSON-serialized object containing the parameters of the ephemeral message to send"
    },
    {
     "name": "latitude",
@@ -1818,16 +1758,10 @@
     "description": "Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat"
    },
    {
-    "name": "receiver_user_id",
-    "type": "Integer",
+    "name": "ephemeral_message_parameters",
+    "type": "EphemeralMessageParameters",
     "required": false,
-    "description": "For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See ephemeral message sending for more details."
-   },
-   {
-    "name": "callback_query_id",
-    "type": "String",
-    "required": false,
-    "description": "For outgoing ephemeral messages, identifier of the callback query which triggered the message if any"
+    "description": "A JSON-serialized object containing the parameters of the ephemeral message to send"
    },
    {
     "name": "latitude",
@@ -1949,16 +1883,10 @@
     "description": "Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat"
    },
    {
-    "name": "receiver_user_id",
-    "type": "Integer",
+    "name": "ephemeral_message_parameters",
+    "type": "EphemeralMessageParameters",
     "required": false,
-    "description": "For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See ephemeral message sending for more details."
-   },
-   {
-    "name": "callback_query_id",
-    "type": "String",
-    "required": false,
-    "description": "For outgoing ephemeral messages, identifier of the callback query which triggered the message if any"
+    "description": "A JSON-serialized object containing the parameters of the ephemeral message to send"
    },
    {
     "name": "phone_number",
@@ -2386,7 +2314,7 @@
     "name": "draft_id",
     "type": "Integer",
     "required": true,
-    "description": "Unique identifier of the message draft; must be non-zero. Changes to drafts with the same identifier are animated."
+    "description": "Unique identifier of the message draft; must be non-zero. Changes to drafts with the same identifier are animated. Otherwise, the draft is replaced without animation."
    },
    {
     "name": "text",
@@ -2405,6 +2333,18 @@
     "type": "Array of MessageEntity",
     "required": false,
     "description": "A JSON-serialized list of special entities that appear in message text, which can be specified instead of parse_mode"
+   },
+   {
+    "name": "can_stop",
+    "type": "Boolean",
+    "required": false,
+    "description": "Pass True to show the user a button to stop further drafts. The bot will receive an Update “stopped_message_generation” if the user presses the button."
+   },
+   {
+    "name": "keep_on_stop",
+    "type": "Boolean",
+    "required": false,
+    "description": "Pass True to keep the draft in the chat when the button is pressed. The draft will still disappear after a short time or if the bot sends a message. To fully preserve the partial draft, the bot should send it as a new message."
    }
   ]
  },
@@ -2749,6 +2689,12 @@
     "type": "Boolean",
     "required": false,
     "description": "Pass True if the administrator can edit the tags of regular members; for groups and supergroups only"
+   },
+   {
+    "name": "can_send_welcome_messages",
+    "type": "Boolean",
+    "required": false,
+    "description": "Pass True if the administrator can manage chat welcome messages or directly send them in the case of bots"
    }
   ]
  },
@@ -3549,7 +3495,7 @@
     "name": "cache_time",
     "type": "Integer",
     "required": false,
-    "description": "The maximum amount of time in seconds that the result of the callback query may be cached client-side. Telegram apps will support caching starting in version 3.14. Defaults to 0."
+    "description": "The maximum amount of time in seconds that the result of the callback query may be cached client-side. Defaults to 0."
    }
   ]
  },
@@ -4772,7 +4718,7 @@
     "name": "rich_message",
     "type": "InputRichMessage",
     "required": false,
-    "description": "New rich content of the message; required if text isn't specified. Direct upload of new files isn't supported when an inline message is edited."
+    "description": "New rich content of the message; required if text isn't specified. Direct upload of new files and explicit upload of files by a URL isn't supported when an inline message is edited."
    },
    {
     "name": "reply_markup",
@@ -5088,7 +5034,7 @@
   ]
  },
  "editEphemeralMessageText": {
-  "description": "Use this method to edit an ephemeral text message. Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline. On success, True is returned.",
+  "description": "Use this method to edit an ephemeral text or rich message. Note that it is not guaranteed that the user will receive the message edit event, especially if they are offline. On success, True is returned.",
   "params": [
    {
     "name": "chat_id",
@@ -5111,8 +5057,8 @@
    {
     "name": "text",
     "type": "String",
-    "required": true,
-    "description": "New text of the message, 1-4096 characters after entity parsing"
+    "required": false,
+    "description": "New text of the message, 1-4096 characters after entity parsing; required if rich_message isn't specified"
    },
    {
     "name": "parse_mode",
@@ -5125,6 +5071,12 @@
     "type": "Array of MessageEntity",
     "required": false,
     "description": "A JSON-serialized list of special entities that appear in message text, which can be specified instead of parse_mode"
+   },
+   {
+    "name": "rich_message",
+    "type": "InputRichMessage",
+    "required": false,
+    "description": "New rich content of the message; required if text isn't specified"
    },
    {
     "name": "link_preview_options",
@@ -5165,7 +5117,7 @@
     "name": "media",
     "type": "InputMedia",
     "required": true,
-    "description": "A JSON-serialized object for the new media content of the message. A new file can't be uploaded; use a previously uploaded file via its file_id or specify a URL."
+    "description": "A JSON-serialized object for the new media content of the message"
    },
    {
     "name": "reply_markup",
@@ -5213,6 +5165,12 @@
     "type": "Array of MessageEntity",
     "required": false,
     "description": "A JSON-serialized list of special entities that appear in the caption, which can be specified instead of parse_mode"
+   },
+   {
+    "name": "show_caption_above_media",
+    "type": "Boolean",
+    "required": false,
+    "description": "Pass True if the caption must be shown above the message media. Supported only for animation, photo and video messages."
    },
    {
     "name": "reply_markup",
@@ -5434,16 +5392,10 @@
     "description": "Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat"
    },
    {
-    "name": "receiver_user_id",
-    "type": "Integer",
+    "name": "ephemeral_message_parameters",
+    "type": "EphemeralMessageParameters",
     "required": false,
-    "description": "For outgoing ephemeral messages, unique identifier of the user who will receive the message; for group and supergroup chats only. It is not guaranteed that the user will receive the message, especially if they are offline. See ephemeral message sending for more details."
-   },
-   {
-    "name": "callback_query_id",
-    "type": "String",
-    "required": false,
-    "description": "For outgoing ephemeral messages, identifier of the callback query which triggered the message if any"
+    "description": "A JSON-serialized object containing the parameters of the ephemeral message to send"
    },
    {
     "name": "sticker",
@@ -5820,6 +5772,12 @@
     "description": "Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat"
    },
    {
+    "name": "ephemeral_message_parameters",
+    "type": "EphemeralMessageParameters",
+    "required": false,
+    "description": "A JSON-serialized object containing the parameters of the ephemeral message to send"
+   },
+   {
     "name": "rich_message",
     "type": "InputRichMessage",
     "required": true,
@@ -5888,13 +5846,25 @@
     "name": "draft_id",
     "type": "Integer",
     "required": true,
-    "description": "Unique identifier of the message draft; must be non-zero. Changes to drafts with the same identifier are animated."
+    "description": "Unique identifier of the message draft; must be non-zero. Changes to drafts with the same identifier are animated. Otherwise, the draft is replaced without animation."
    },
    {
     "name": "rich_message",
     "type": "InputRichMessage",
     "required": true,
-    "description": "The partial message to be streamed. Direct upload of new files isn't supported."
+    "description": "The partial message to be streamed. Direct upload of new files and explicit upload of files by a URL isn't supported."
+   },
+   {
+    "name": "can_stop",
+    "type": "Boolean",
+    "required": false,
+    "description": "Pass True to show the user a button to stop further drafts. The bot will receive an Update “stopped_message_generation” if the user presses the button."
+   },
+   {
+    "name": "keep_on_stop",
+    "type": "Boolean",
+    "required": false,
+    "description": "Pass True to keep the draft in the chat when the button is pressed. The draft will still disappear after a short time or if the bot sends a message. To fully preserve the partial draft, the bot should send it as a new message."
    }
   ]
  },

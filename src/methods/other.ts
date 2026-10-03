@@ -1,6 +1,6 @@
 import { z } from "zod";
 import {
-  MethodDef, ChatId, UserId, Text, ParseMode, MessageEntities, BooleanFlag,
+  MethodDef, ChatId, UserId, ParseMode, MessageEntities, BooleanFlag,
   ANNOTATIONS,
 } from "../method-registry.js";
 
@@ -19,7 +19,9 @@ export const otherMethods: MethodDef[] = [
       { name: "chat_id", type: z.number().int(), required: true, description: "Target chat ID" },
       { name: "message_thread_id", type: z.number().int(), required: false, description: "Target message thread ID" },
       { name: "draft_id", type: z.number().int(), required: true, description: "Non-zero draft ID; updates to the same ID are animated" },
-      { name: "text", type: Text, required: false, description: "Draft message text" },
+      { name: "text", type: z.string().max(4096), required: false, description: "Draft message text; may be empty" },
+      { name: "can_stop", type: BooleanFlag, required: false, description: "Allow the user to stop message generation" },
+      { name: "keep_on_stop", type: BooleanFlag, required: false, description: "Keep the draft after generation is stopped" },
       { name: "parse_mode", type: ParseMode, required: false, description: "Text formatting mode" },
       { name: "entities", type: MessageEntities, required: false, description: "Special entities" },
     ],

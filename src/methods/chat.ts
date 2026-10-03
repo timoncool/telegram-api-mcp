@@ -122,6 +122,7 @@ export const chatMethods: MethodDef[] = [
       { name: "is_anonymous", type: BooleanFlag, required: false, description: "Admin actions are anonymous" },
       { name: "can_manage_chat", type: BooleanFlag, required: false, description: "Can manage chat" },
       { name: "can_delete_messages", type: BooleanFlag, required: false, description: "Can delete messages" },
+      { name: "can_send_welcome_messages", type: z.boolean(), required: false, description: "Allow sending welcome messages" },
       { name: "can_manage_video_chats", type: BooleanFlag, required: false, description: "Can manage video chats" },
       { name: "can_restrict_members", type: BooleanFlag, required: false, description: "Can restrict members" },
       { name: "can_promote_members", type: BooleanFlag, required: false, description: "Can promote members" },
