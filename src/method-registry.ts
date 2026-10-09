@@ -322,11 +322,19 @@ export function commonEditParams(): ParamDef[] {
 
 // ─── Build Zod schema from ParamDefs ────────────────────────────────────
 
-export function buildZodSchema(params: ParamDef[]): z.ZodObject<Record<string, ZodTypeAny>> {
+/**
+ * `defaulted` names params the server fills in itself when they are missing
+ * (TELEGRAM_DEFAULT_CHAT_ID, TELEGRAM_DEFAULT_THREAD_ID), so callers may omit them.
+ */
+export function buildZodSchema(
+  params: ParamDef[],
+  defaulted: ReadonlySet<string> = new Set()
+): z.ZodObject<Record<string, ZodTypeAny>> {
   const shape: Record<string, ZodTypeAny> = {};
 
   for (const param of params) {
-    shape[param.name] = param.required ? param.type : param.type.optional();
+    const required = param.required && !defaulted.has(param.name);
+    shape[param.name] = required ? param.type : param.type.optional();
   }
 
   return z.object(shape);
