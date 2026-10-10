@@ -16,28 +16,16 @@
 import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseBotApi, uploadSchemaSource } from "./bot-api-spec.mjs";
 
 const DOCS = join(dirname(fileURLToPath(import.meta.url)), "..", "docs");
 const PAGES = ["api", "api-changelog", "features", "faq", "inline", "webhooks", "webapps", "payments", "games"];
-
-const decode = (s) =>
-  s
-    .replace(/&#8212;/g, "—")
-    .replace(/&#8230;/g, "…")
-    .replace(/&#39;/g, "'")
-    .replace(/&quot;/g, '"')
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&");
-
-const text = (s) => decode(s.replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").trim();
 
 mkdirSync(DOCS, { recursive: true });
 
 const pages = {};
 for (const page of PAGES) {
-  const res = await fetch(`https://core.telegram.org/bots/${page}`);
+  const res = await fetch(`https://core.telegram.org/bots/${page}`, { signal: AbortSignal.timeout(30000) });
   if (!res.ok) throw new Error(`GET /bots/${page} → ${res.status}`);
   const html = await res.text();
   pages[page] = html;
@@ -51,33 +39,11 @@ const api = pages.api;
 const version = /Bot API (\d+\.\d+)/.exec(pages["api-changelog"])?.[1] ?? "unknown";
 writeFileSync(join(DOCS, "api-version.txt"), `${version}\n`);
 
-// ─── Methods, types and their parameter tables ───────────────────────────
-// Every method/type on the page is an <h4> anchor; methods start lowercase,
-// types uppercase. The <table class="table"> that follows holds the params.
-const methods = {};
-const types = [];
-
-for (const chunk of api.split(/<h4>/).slice(1)) {
-  const name = /^(?:<a class="anchor"[^>]*>(?:<i[^>]*><\/i>)?<\/a>)?([A-Za-z0-9]+)<\/h4>/.exec(chunk)?.[1];
-  if (!name) continue;
-  if (/^[A-Z]/.test(name)) {
-    types.push(name);
-    continue;
-  }
-  const table = /<table class="table">([\s\S]*?)<\/table>/.exec(chunk);
-  const rows = table
-    ? [...table[1].matchAll(/<tr>\s*<td>([\s\S]*?)<\/td>\s*<td>([\s\S]*?)<\/td>\s*<td>([\s\S]*?)<\/td>\s*(?:<td>([\s\S]*?)<\/td>)?/g)]
-    : [];
-  methods[name] = {
-    description: text(/<p>([\s\S]*?)<\/p>/.exec(chunk)?.[1] ?? ""),
-    params: rows.map((r) => ({
-      name: text(r[1]),
-      type: text(r[2]),
-      required: text(r[3]) === "Yes",
-      description: text(r[4] ?? ""),
-    })),
-  };
-}
+const spec = parseBotApi(api);
+const methods = spec.methods;
+const types = Object.keys(spec.types);
+writeFileSync(join(DOCS, "api-types.json"), JSON.stringify(spec.types, null, 1) + "\n");
+writeFileSync(join(DOCS, "../src/upload-schema.ts"), uploadSchemaSource(spec));
 
 const methodNames = Object.keys(methods).sort();
 const typeNames = [...new Set(types)].sort();

@@ -172,8 +172,9 @@ export const editingMethods: MethodDef[] = [
     canUploadFiles: false,
     returns: "true",
     params: [
+      { name: "rich_message", type: RichMessage, required: false, description: "Replacement rich message" },
       ...ephemeralTarget(),
-      { name: "text", type: Text, required: true, description: "New message text (1-4096 chars)" },
+      { name: "text", type: Text, required: false, description: "New message text (1-4096 chars)" },
       { name: "parse_mode", type: ParseMode, required: false, description: "Text formatting mode" },
       { name: "entities", type: MessageEntities, required: false, description: "Special entities" },
       { name: "link_preview_options", type: LinkPreviewOptions, required: false, description: "Link preview settings" },
@@ -205,6 +206,7 @@ export const editingMethods: MethodDef[] = [
     canUploadFiles: false,
     returns: "true",
     params: [
+      { name: "show_caption_above_media", type: z.boolean(), required: false, description: "Show caption above media" },
       ...ephemeralTarget(),
       { name: "caption", type: Caption, required: false, description: "New caption (0-1024 visible chars)" },
       { name: "parse_mode", type: ParseMode, required: false, description: "Caption formatting mode" },

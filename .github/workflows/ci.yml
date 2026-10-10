@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
   pull_request:
-    branches: [main]
+    branches: [main, master]
 
 jobs:
   test:
@@ -26,3 +26,4 @@ jobs:
       - run: npm run typecheck
       - run: npm run build
       - run: npm test
+      - run: node scripts/audit-registry.mjs
