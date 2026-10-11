@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/timoncool-telegram-api-mcp-badge.png)](https://mseep.ai/app/timoncool-telegram-api-mcp)
+
 <div align="center">
 
 # telegram-api-mcp
