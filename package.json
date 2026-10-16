@@ -1,7 +1,7 @@
 {
   "name": "telegram-api-mcp",
   "version": "0.2.0",
-  "description": "Ultimate Telegram Bot API v10.2 MCP Server — 185 methods incl. rich messages, meta-mode, rate limiting, circuit breaker",
+  "description": "Telegram Bot API 10.3 MCP server — 185 methods, complete parameter registry and schema-driven file uploads",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -18,7 +18,9 @@
     "audit": "npm run build && node scripts/audit-registry.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "audit:live": "npm run build && node scripts/audit-registry.mjs --live",
+    "check": "npm run typecheck && npm run lint && npm test && npm run audit"
   },
   "keywords": [
     "telegram",
@@ -46,7 +48,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {

@@ -44,7 +44,7 @@ export const messageMethods: MethodDef[] = [
     params: [
       { name: "chat_id", type: ChatId, required: true, description: "Target chat ID or @username" },
       { name: "rich_message", type: RichMessage, required: true, description: "InputRichMessage — exactly one of markdown, html or blocks" },
-      ...commonSendParams({ directMessagesTopic: true, suggestedPost: true }),
+      ...commonSendParams({ directMessagesTopic: true, ephemeral: true, suggestedPost: true }),
     ],
   },
   {
@@ -63,6 +63,8 @@ export const messageMethods: MethodDef[] = [
       { name: "message_thread_id", type: z.number().int(), required: false, description: "Target message thread ID" },
       { name: "draft_id", type: z.number().int(), required: true, description: "Non-zero draft ID; updates to the same ID are animated" },
       { name: "rich_message", type: RichMessage, required: true, description: "Partial rich message; direct file upload is not supported" },
+      { name: "can_stop", type: BooleanFlag, required: false, description: "Allow the user to stop message generation" },
+      { name: "keep_on_stop", type: BooleanFlag, required: false, description: "Keep the draft after generation is stopped" },
     ],
   },
   // sendMessageDraft is in other.ts
