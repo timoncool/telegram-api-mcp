@@ -17,10 +17,13 @@ const schemaCache = new Map<string, ReturnType<typeof buildZodSchema>>();
 /** Module-level TRAIL instance for auto-logging in callTelegram. */
 let trailInstance: Trail | null = null;
 
+/** Params the client fills from config when omitted — optional in every tool schema. */
+let defaultedParams: ReadonlySet<string> = new Set();
+
 function getSchema(method: MethodDef): ReturnType<typeof buildZodSchema> {
   let schema = schemaCache.get(method.apiMethod);
   if (!schema) {
-    schema = buildZodSchema(method.params);
+    schema = buildZodSchema(method.params, defaultedParams);
     schemaCache.set(method.apiMethod, schema);
   }
   return schema;
@@ -28,6 +31,11 @@ function getSchema(method: MethodDef): ReturnType<typeof buildZodSchema> {
 
 export async function startServer(config: Config): Promise<void> {
   const client = new TelegramClient(config);
+
+  const defaulted = new Set<string>();
+  if (config.defaultChatId) defaulted.add("chat_id");
+  if (config.defaultThreadId) defaulted.add("message_thread_id");
+  defaultedParams = defaulted;
 
   const server = new McpServer({
     name: "telegram-api-mcp",

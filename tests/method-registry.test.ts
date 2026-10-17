@@ -79,6 +79,18 @@ describe("Method Registry", () => {
     expect(tooLong.success).toBe(false);
   });
 
+  it("lets callers omit params the server defaults (TELEGRAM_DEFAULT_CHAT_ID)", () => {
+    const method = findMethodByApiName("sendMessage")!;
+
+    // Without a default, chat_id stays required
+    expect(buildZodSchema(method.params).safeParse({ text: "hello" }).success).toBe(false);
+
+    // With one, it can be omitted; other required params still are required
+    const schema = buildZodSchema(method.params, new Set(["chat_id"]));
+    expect(schema.safeParse({ text: "hello" }).success).toBe(true);
+    expect(schema.safeParse({}).success).toBe(false);
+  });
+
   it("validates sendPoll with v9.6 params", () => {
     const method = findMethodByApiName("sendPoll")!;
     expect(method).toBeDefined();
