@@ -115,6 +115,11 @@ export const ReplyMarkup = z.any().describe("InlineKeyboardMarkup, ReplyKeyboard
 export const ReplyParameters = z.any().describe("ReplyParameters object");
 export const MessageEntities = z.any().describe("Array of MessageEntity objects");
 export const LinkPreviewOptions = z.any().describe("LinkPreviewOptions object");
+export const EphemeralMessageParameters = z.object({
+  receiver_user_id: UserId,
+  callback_query_id: z.string().optional(),
+  replace_callback_query_message: z.boolean().optional(),
+}).passthrough().describe("Ephemeral message recipient and callback settings (Bot API 10.3)");
 export const BooleanFlag = z.boolean();
 export const PositiveInt = z.number().int().positive();
 export const SuggestedPostParameters = z
@@ -235,7 +240,7 @@ export const RichMessage = z
 export interface SendParamOptions {
   /** direct_messages_topic_id — channel direct messages topics (9.2) */
   directMessagesTopic?: boolean;
-  /** receiver_user_id + callback_query_id — ephemeral messages (10.2) */
+  /** ephemeral_message_parameters — ephemeral messages (10.3) */
   ephemeral?: boolean;
   /** suggested_post_parameters — direct messages chats (9.2) */
   suggestedPost?: boolean;
@@ -278,8 +283,7 @@ export function commonSendParams(opts: SendParamOptions = {}): ParamDef[] {
   }
   if (ephemeral) {
     params.push(
-      { name: "receiver_user_id", type: UserId, required: false, description: "Send as an ephemeral message visible only to this user (10.2)" },
-      { name: "callback_query_id", type: z.string(), required: false, description: "Callback query the ephemeral message answers (10.2)" },
+      { name: "ephemeral_message_parameters", type: EphemeralMessageParameters, required: false, description: "Recipient and callback settings for an ephemeral message" },
     );
   }
   params.push(
@@ -322,14 +326,16 @@ export function commonEditParams(): ParamDef[] {
 
 // ─── Build Zod schema from ParamDefs ────────────────────────────────────
 
-export function buildZodSchema(params: ParamDef[]): z.ZodObject<Record<string, ZodTypeAny>> {
+export function buildZodSchema(params: ParamDef[]): z.ZodObject<Record<string, ZodTypeAny>, "strict"> {
   const shape: Record<string, ZodTypeAny> = {};
 
   for (const param of params) {
-    shape[param.name] = param.required ? param.type : param.type.optional();
+    shape[param.name] = param.required
+      ? (param.type.isOptional() ? param.type.refine((value) => value !== undefined, "Required parameter") : param.type)
+      : param.type.optional();
   }
 
-  return z.object(shape);
+  return z.object(shape).strict();
 }
 
 // ─── Build JSON Schema (for MCP tool registration) ──────────────────────
