@@ -11,14 +11,28 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseBotApi, uploadSchemaSource } from "./bot-api-spec.mjs";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const docs = JSON.parse(readFileSync(join(ROOT, "docs", "api-params.json"), "utf8"));
-const version = readFileSync(join(ROOT, "docs", "api-version.txt"), "utf8").trim();
+let docs = JSON.parse(readFileSync(join(ROOT, "docs", "api-params.json"), "utf8"));
+let types = JSON.parse(readFileSync(join(ROOT, "docs", "api-types.json"), "utf8"));
+let version = readFileSync(join(ROOT, "docs", "api-version.txt"), "utf8").trim();
+if (process.argv.includes("--live")) {
+  const response = await fetch("https://core.telegram.org/bots/api", { signal: AbortSignal.timeout(30000) });
+  if (!response.ok) throw new Error(`Official documentation returned HTTP ${response.status}`);
+  const html = await response.text();
+  ({ methods: docs, types } = parseBotApi(html));
+  version = /Bot API (\d+\.\d+)/.exec(html)?.[1] ?? "unknown";
+}
 const { allMethods } = await import(new URL("../dist/methods/index.js", import.meta.url));
 
 const implemented = new Map(allMethods.map((m) => [m.apiMethod, m]));
 const problems = [];
+if (implemented.size !== allMethods.length) problems.push("Duplicate API method names");
+if (new Set(allMethods.map((m) => m.toolName)).size !== allMethods.length) problems.push("Duplicate tool names");
+if (readFileSync(join(ROOT, "src", "upload-schema.ts"), "utf8") !== uploadSchemaSource({ methods: docs, types })) {
+  problems.push("Upload field graph differs from the specification; run npm run docs:refresh");
+}
 
 for (const name of Object.keys(docs)) {
   if (!implemented.has(name)) problems.push(`MISSING METHOD  ${name}`);
@@ -32,6 +46,7 @@ for (const [name, def] of implemented) {
   if (!spec) continue;
   const official = spec.params.map((p) => p.name);
   const ours = def.params.map((p) => p.name);
+  if (new Set(ours).size !== ours.length) problems.push(`${name}  duplicate parameter names`);
   const missing = official.filter((p) => !ours.includes(p));
   const extra = ours.filter((p) => !official.includes(p));
   const wrongRequired = spec.params

@@ -24,6 +24,8 @@ export interface Config {
   maxFileSize: number;
   /** Run in meta-mode with 2 tools instead of all (default: false) */
   metaMode: boolean;
+  /** Maximum text response length; 0 keeps the complete API result. */
+  maxResponseLength?: number;
 }
 
 export function loadConfig(): Config {
@@ -50,5 +52,6 @@ export function loadConfig(): Config {
     allowedUploadDirs: uploadDirs ? uploadDirs.split(",").map((d) => d.trim()) : [],
     maxFileSize: parseInt(process.env.TELEGRAM_MAX_FILE_SIZE || String(50 * 1024 * 1024), 10),
     metaMode: process.env.TELEGRAM_META_MODE === "true",
+    maxResponseLength: parseInt(process.env.TELEGRAM_MAX_RESPONSE_LENGTH || "0", 10),
   };
 }
